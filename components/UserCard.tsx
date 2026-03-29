@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 export default function UserCard({ user }) {
   const [rooms, setRooms] = useState([]);
@@ -23,7 +24,8 @@ export default function UserCard({ user }) {
   // ✅ Assign user to selected room
   const assignRoom = async () => {
     if (!selectedRoom) {
-      alert("Please select a room");
+      // alert("Please select a room");
+      toast.info(`Select A Room!`,{position:'top-right', duration:3000})
       return;
     }
 
@@ -40,9 +42,9 @@ export default function UserCard({ user }) {
     const data = await res.json();
 
     if (data.success) {
-      alert("✅ User assigned!");
+      toast.success(`Room assigned!`,{position:'top-right', duration:3000})
     } else {
-      alert("❌ " + data.error);
+      toast.error(data.error,{position:'top-right', duration:3000})
     }
 
     setLoading(false);

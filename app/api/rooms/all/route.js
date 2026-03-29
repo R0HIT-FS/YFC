@@ -9,7 +9,7 @@ export async function GET() {
 
     const formatted = rooms.map((room) => ({
       ...room,
-      _id: room._id.toString(), // ✅ IMPORTANT
+      _id: room._id.toString(),
     }));
 
     return Response.json({

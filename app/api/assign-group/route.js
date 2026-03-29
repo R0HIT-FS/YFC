@@ -2,7 +2,7 @@ import clientPromise from "../../lib/db";
 import { ObjectId } from "mongodb";
 
 export async function POST(req) {
-  const { userId, roomId } = await req.json();
+  const { userId, groupId } = await req.json();
 
   const client = await clientPromise;
   const db = client.db("yfc");
@@ -11,7 +11,7 @@ export async function POST(req) {
     { _id: new ObjectId(userId) },
     {
       $set: {
-        roomId: new ObjectId(roomId),
+        groupId: new ObjectId(groupId),
       },
     }
   );

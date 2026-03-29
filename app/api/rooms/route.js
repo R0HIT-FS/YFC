@@ -3,7 +3,7 @@ import clientPromise from "../../lib/db";
 export async function POST(req) {
   try {
     const body = await req.json();
-    const { name } = body;
+    const { name, limit } = body;
 
     if (!name || name.trim() === "") {
       return Response.json({
@@ -12,12 +12,18 @@ export async function POST(req) {
       });
     }
 
+    if (!limit || isNaN(limit) || Number(limit) <= 0) {
+      return Response.json({
+        success: false,
+        error: "Valid limit is required",
+      });
+    }
+
     const client = await clientPromise;
     const db = client.db("yfc");
 
     const roomsCollection = db.collection("rooms");
 
-    // prevent duplicate room names
     const existing = await roomsCollection.findOne({ name });
 
     if (existing) {
@@ -28,7 +34,8 @@ export async function POST(req) {
     }
 
     const result = await roomsCollection.insertOne({
-      name,
+      name: name.trim(),
+      limit: Number(limit),
       createdAt: new Date(),
     });
 
@@ -37,6 +44,7 @@ export async function POST(req) {
       room: {
         _id: result.insertedId.toString(),
         name,
+        limit,
       },
     });
   } catch (error) {

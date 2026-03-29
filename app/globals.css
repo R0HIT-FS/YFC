@@ -16,3 +16,25 @@
   margin:0;
   }
 }
+
+input[type=number]::-webkit-inner-spin-button, 
+input[type=number]::-webkit-outer-spin-button { 
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    margin: 0; 
+}
+
+
+select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+[data-radix-popper-content-wrapper]:focus,
+button:focus,
+div:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}

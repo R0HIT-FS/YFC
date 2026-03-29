@@ -1,4 +1,6 @@
+import CreateRoom from "@/components/CreateRoom";
 import clientPromise from "../lib/db";
+import RoomCard from "@/components/RoomCard";
 
 async function getData() {
   const client = await clientPromise;
@@ -8,14 +10,18 @@ async function getData() {
   const users = await db.collection("users").find({}).toArray();
 
   return {
+    // ✅ Convert room _id
     rooms: rooms.map((r) => ({
       ...r,
       _id: r._id.toString(),
     })),
+
+    // ✅ Convert ALL ObjectIds in users
     users: users.map((u) => ({
       ...u,
       _id: u._id.toString(),
       roomId: u.roomId ? u.roomId.toString() : null,
+      groupId: u.groupId ? u.groupId.toString() : null, // 🔥 IMPORTANT
     })),
   };
 }
@@ -25,46 +31,26 @@ export default async function RoomsPage() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 p-10">
-      <h1 className="text-3xl font-semibold mb-8">
+      {/* Create Room */}
+      <h2 className="text-3xl font-semibold mb-8">
+        Create A Room
+      </h2>
+
+      <CreateRoom />
+
+      {/* Rooms List */}
+      <h2 className="text-3xl font-semibold mb-8 mt-10">
         Rooms
-      </h1>
+      </h2>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {rooms.map((room) => {
-          const roomUsers = users.filter(
-            (user) => user.roomId === room._id
-          );
-
-          return (
-            <div
-              key={room._id}
-              className="bg-zinc-900 border border-zinc-800 rounded-xl p-5"
-            >
-              {/* Room Name */}
-              <h2 className="text-lg font-semibold mb-3">
-                {room.name}
-              </h2>
-
-              {/* Users in room */}
-              <div className="space-y-2">
-                {roomUsers.length > 0 ? (
-                  roomUsers.map((user) => (
-                    <div
-                      key={user._id}
-                      className="text-sm text-zinc-300 bg-zinc-800 px-3 py-2 rounded-md"
-                    >
-                      {user.name}
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-zinc-500">
-                    No users in this room
-                  </p>
-                )}
-              </div>
-            </div>
-          );
-        })}
+        {rooms.map((room) => (
+          <RoomCard
+            key={room._id}
+            room={room}
+            users={users}
+          />
+        ))}
       </div>
     </div>
   );

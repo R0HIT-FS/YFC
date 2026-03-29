@@ -1,10 +1,15 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 
 export default function CreateRoom() {
   const [name, setName] = useState("");
   const [message, setMessage] = useState("");
+  const [limit, setLimit] = useState("");
+
+  const router = useRouter();
 
   const handleCreate = async () => {
     setMessage("");
@@ -12,19 +17,36 @@ export default function CreateRoom() {
     try {
       const res = await fetch("/api/rooms", {
         method: "POST",
-        body: JSON.stringify({ name }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name,
+          limit,
+        }),
       });
 
       const data = await res.json();
 
       if (data.success) {
-        setMessage("✅ Room created");
+        toast.success("Room created", {
+        position: "top-right",
+        duration: 3000,
+      });
         setName("");
+        setLimit("");
+        router.refresh();
       } else {
-        setMessage(`❌ ${data.error}`);
+                toast.error(`${data.error}`, {
+        position: "top-right",
+        duration: 3000,
+      });
       }
     } catch {
-      setMessage("❌ Error creating room");
+        toast("Error creating room", {
+        position: "top-right",
+        duration: 3000,
+      });
     }
   };
 
@@ -32,7 +54,7 @@ export default function CreateRoom() {
     <div style={{ marginBottom: "20px" }}>
       <input
         type="text"
-        placeholder="Enter room name"
+        placeholder="Room name"
         value={name}
         onChange={(e) => setName(e.target.value)}
         style={{
@@ -40,11 +62,28 @@ export default function CreateRoom() {
           marginRight: "10px",
           borderRadius: "6px",
           border: "1px solid #ccc",
-          color: "gray",
+          color: "white",
         }}
       />
 
-      <button onClick={handleCreate} className="bg-green-500 text-white px-4 py-2 rounded-sm">
+      <input
+        type="number"
+        placeholder="Room limit"
+        value={limit}
+        onChange={(e) => setLimit(e.target.value)}
+        style={{
+          padding: "8px",
+          marginRight: "10px",
+          borderRadius: "6px",
+          border: "1px solid #ccc",
+          color: "white",
+        }}
+      />
+
+      <button
+        onClick={handleCreate}
+        className="bg-white text-black px-4 py-2 rounded-sm"
+      >
         Create Room
       </button>
 
