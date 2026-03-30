@@ -25,7 +25,7 @@ export default function UserCard({ user }) {
   const assignRoom = async () => {
     if (!selectedRoom) {
       // alert("Please select a room");
-      toast.info(`Select A Room!`,{position:'top-right', duration:3000})
+      toast.info(`Select A Room!`,{position:'bottom-right', duration:3000})
       return;
     }
 
@@ -42,9 +42,9 @@ export default function UserCard({ user }) {
     const data = await res.json();
 
     if (data.success) {
-      toast.success(`Room assigned!`,{position:'top-right', duration:3000})
+      toast.success(`Room assigned!`,{position:'bottom-right', duration:3000})
     } else {
-      toast.error(data.error,{position:'top-right', duration:3000})
+      toast.error(data.error,{position:'bottom-right', duration:3000})
     }
 
     setLoading(false);
@@ -58,11 +58,11 @@ export default function UserCard({ user }) {
       </div>
 
       {/* Name */}
-      <div className="name">{user.name}</div>
+      <div className="name">{user?.name}, {user?.age}</div>
 
       {/* Info */}
       <div className="info">
-        <div>{user.email}</div>
+        <div>{user?.email}</div>
       </div>
 
       {/* 🔽 Room Dropdown */}

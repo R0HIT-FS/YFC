@@ -23,13 +23,13 @@
 
 //     if (data.success) {
 //       toast.success("User removed", {
-//         position: "top-right",
+//         position: 'bottom-right',
 //         duration: 3000,
 //       });
 //       router.refresh();
 //     } else {
 //       toast.error("Error removing user", {
-//         position: "top-right",
+//         position: 'bottom-right',
 //         duration: 3000,
 //       });
 //     }
@@ -117,13 +117,13 @@ export default function GroupCard({ group, users }) {
 
     if (data.success) {
       toast.success("User removed", {
-        position: "top-right",
+        position: 'bottom-right',
         duration: 3000,
       });
       router.refresh();
     } else {
       toast.error(data.error || "Error removing user", {
-        position: "top-right",
+        position: 'bottom-right',
         duration: 3000,
       });
     }
@@ -143,13 +143,13 @@ export default function GroupCard({ group, users }) {
 
     if (data.success) {
       toast.success("Group deleted", {
-        position: "top-right",
+        position: 'bottom-right',
         duration: 3000,
       });
       router.refresh();
     } else {
       toast.error(data.error || "Error deleting group", {
-        position: "top-right",
+        position: 'bottom-right',
         duration: 3000,
       });
     }

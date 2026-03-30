@@ -30,7 +30,7 @@ export default function CreateRoom() {
 
       if (data.success) {
         toast.success("Room created", {
-        position: "top-right",
+        position: 'bottom-right',
         duration: 3000,
       });
         setName("");
@@ -38,13 +38,13 @@ export default function CreateRoom() {
         router.refresh();
       } else {
                 toast.error(`${data.error}`, {
-        position: "top-right",
+        position: 'bottom-right',
         duration: 3000,
       });
       }
     } catch {
         toast("Error creating room", {
-        position: "top-right",
+        position: 'bottom-right',
         duration: 3000,
       });
     }

@@ -11,7 +11,7 @@ export default function CreateGroup() {
   const handleCreate = async () => {
     if (!name.trim()) {
       toast.error("Group name required", {
-        position: "top-right",
+        position: 'bottom-right',
         duration: 3000,
       });
       return;
@@ -32,7 +32,7 @@ export default function CreateGroup() {
 
       if (data.success) {
         toast.success("Group created", {
-          position: "top-right",
+          position: 'bottom-right',
           duration: 3000,
         });
 
@@ -40,13 +40,13 @@ export default function CreateGroup() {
         router.refresh();
       } else {
         toast.error(data.error, {
-          position: "top-right",
+          position: 'bottom-right',
           duration: 3000,
         });
       }
     } catch {
       toast.error("Error creating group", {
-        position: "top-right",
+        position: 'bottom-right',
         duration: 3000,
       });
     }

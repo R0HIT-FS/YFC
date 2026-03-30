@@ -1,202 +1,57 @@
-// "use client";
-
-// import { useRouter } from "next/navigation";
-// import { useEffect, useState } from "react";
-// import { toast } from "sonner";
-
-// export default function UsersClient({ users }) {
-//   const [rooms, setRooms] = useState({});
-//   const [loadingUserId, setLoadingUserId] = useState(null);
-//   const [search, setSearch] = useState("");
-
-//   const router = useRouter();
-
-//   useEffect(() => {
-//     const fetchRooms = async () => {
-//       const res = await fetch("/api/rooms/all");
-//       const data = await res.json();
-
-//       if (data.success) {
-//         const roomMap = {};
-//         data.rooms.forEach((room) => {
-//           roomMap[room._id] = room.name;
-//         });
-
-//         setRooms(roomMap);
-//       }
-//     };
-
-//     fetchRooms();
-//   }, []);
-
-//   const assignRoom = async (userId, roomId) => {
-//     if (!roomId) {
-//       toast.warning(`Select a room!`,{ position: "top-right", duration: 3000});
-//       return;
-//     }
-
-//     setLoadingUserId(userId);
-
-//     const res = await fetch("/api/assign-room", {
-//       method: "POST",
-//       headers: {
-//         "Content-Type": "application/json", // ✅ IMPORTANT
-//       },
-//       body: JSON.stringify({ userId, roomId }),
-//     });
-
-//     const data = await res.json();
-
-//     if (data.success) {
-//       toast.success(`Room assigned.`,{ position: "top-right", duration: 3000});
-//       router.refresh();
-//     } else {
-//       toast.error(data.error ,{ position: "top-right", duration: 3000});
-//     }
-
-//     setLoadingUserId(null);
-//   };
-
-//   const filteredUsers = users.filter((user) => {
-//     const query = search.toLowerCase();
-
-//     return (
-//       user.name?.toLowerCase().includes(query) ||
-//       user.email?.toLowerCase().includes(query)
-//     );
-//   });
-
-//   return (
-//     <div className="min-h-screen bg-zinc-950 text-zinc-100 p-10">
-//       <h1 className="text-3xl font-semibold mb-6 tracking-tight">
-//         Delegates
-//       </h1>
-//       {/* <CreateRoom/> */}
-//       <p className="text-xs text-zinc-400 mb-2">{filteredUsers.length} members found</p>
-//             {/* 🔍 Search Bar */}
-//       <input
-//         type="text"
-//         placeholder="Search by name, email etc...."
-//         value={search}
-//         onChange={(e) => setSearch(e.target.value)}
-//         className="mb-4 w-full max-w-md bg-zinc-900 border border-zinc-800 text-zinc-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-600"
-//       />
-      
-//       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-//         {filteredUsers.map((user) => (
-//           <div
-//             key={user._id}
-//             className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 shadow-sm transition-all duration-300"
-//           >
-//             {/* Avatar */}
-//             <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-sm font-medium mb-3">
-//               {user.name?.charAt(0)?.toUpperCase() || "U"}
-//             </div>
-
-//             {/* Name */}
-//             <div className="text-base font-medium text-zinc-100">
-//               {user.name || "No Name"}
-//             </div>
-
-//             {/* Email */}
-//             <div className="text-sm text-zinc-400 mt-1">
-//               {user.email || "No Email"}
-//             </div>
-
-//             {/* Dropdown */}
-//             <select
-//               defaultValue=""
-//               onChange={(e) =>
-//                 assignRoom(user._id, e.target.value)
-//               }
-//               className="mt-4 w-full bg-zinc-950 border border-zinc-800 text-zinc-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-600"
-//             >
-//               <option value="">Select Room</option>
-
-//               {Object.entries(rooms).map(([id, name]) => (
-//                 <option key={id} value={id}>
-//                   {name}
-//                 </option>
-//               ))}
-//             </select>
-
-//             {/* Loading */}
-//             {loadingUserId === user._id && (
-//               <p className="text-xs text-zinc-400 mt-2">
-//                 Assigning...
-//               </p>
-//             )}
-
-//             {/* Room label */}
-//             {user.roomId && rooms[user.roomId] && (
-//               <p className="text-xs text-zinc-300 mt-2">
-//                 Room: {rooms[user.roomId]}
-//               </p>
-//             )}
-//           </div>
-//         ))}
-//       </div>
-//     </div>
-//   );
-// }
-
-
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { toast } from "sonner";
 
-export default function UsersClient({ users }) {
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
+
+export default function UsersClient({ users: initialUsers }) {
+  const [users, setUsers] = useState(initialUsers);
   const [rooms, setRooms] = useState({});
   const [groups, setGroups] = useState({});
   const [loadingUserId, setLoadingUserId] = useState(null);
   const [search, setSearch] = useState("");
+  const [mode, setMode] = useState("name");
 
-  const router = useRouter();
-
-  // 🔹 Fetch Rooms
+  // 🔥 Fetch rooms + groups
   useEffect(() => {
-    const fetchRooms = async () => {
-      const res = await fetch("/api/rooms/all");
-      const data = await res.json();
+    const fetchData = async () => {
+      const [roomsRes, groupsRes] = await Promise.all([
+        fetch("/api/rooms/all"),
+        fetch("/api/groups/all"),
+      ]);
 
-      if (data.success) {
-        const roomMap = {};
-        data.rooms.forEach((room) => {
-          roomMap[room._id] = room.name;
-        });
-        setRooms(roomMap);
+      const roomsData = await roomsRes.json();
+      const groupsData = await groupsRes.json();
+
+      if (roomsData.success) {
+        const map = {};
+        roomsData.rooms.forEach((r) => (map[r._id] = r.name));
+        setRooms(map);
+      }
+
+      if (groupsData.success) {
+        const map = {};
+        groupsData.groups.forEach((g) => (map[g._id] = g.name));
+        setGroups(map);
       }
     };
 
-    fetchRooms();
+    fetchData();
   }, []);
 
-  // 🔹 Fetch Groups
-  useEffect(() => {
-    const fetchGroups = async () => {
-      const res = await fetch("/api/groups/all");
-      const data = await res.json();
-
-      if (data.success) {
-        const groupMap = {};
-        data.groups.forEach((group) => {
-          groupMap[group._id] = group.name;
-        });
-        setGroups(groupMap);
-      }
-    };
-
-    fetchGroups();
-  }, []);
-
-  // 🔹 Assign Room
+  // 🔥 Assign Room
   const assignRoom = async (userId, roomId) => {
-    if (!roomId) {
-      toast.warning("Select a room!", { position: "top-right" });
-      return;
-    }
+    const user = users.find((u) => u._id === userId);
+    if (user?.roomId === roomId) return;
 
     setLoadingUserId(userId);
 
@@ -211,21 +66,21 @@ export default function UsersClient({ users }) {
     const data = await res.json();
 
     if (data.success) {
-      toast.success("Room assigned", { position: "top-right" });
-      router.refresh();
+      toast.success("Room assigned");
+      setUsers((prev) =>
+        prev.map((u) => (u._id === userId ? { ...u, roomId } : u)),
+      );
     } else {
-      toast.error(data.error, { position: "top-right" });
+      toast.error(data.error);
     }
 
     setLoadingUserId(null);
   };
 
-  // 🔹 Assign Group
+  // 🔥 Assign Group
   const assignGroup = async (userId, groupId) => {
-    if (!groupId) {
-      toast.warning("Select a group!", { position: "top-right" });
-      return;
-    }
+    const user = users.find((u) => u._id === userId);
+    if (user?.groupId === groupId) return;
 
     setLoadingUserId(userId);
 
@@ -240,121 +95,206 @@ export default function UsersClient({ users }) {
     const data = await res.json();
 
     if (data.success) {
-      toast.success("Group assigned", { position: "top-right" });
-      router.refresh();
+      toast.success("Group assigned");
+      setUsers((prev) =>
+        prev.map((u) => (u._id === userId ? { ...u, groupId } : u)),
+      );
     } else {
-      toast.error(data.error, { position: "top-right" });
+      toast.error(data.error);
     }
 
     setLoadingUserId(null);
   };
 
-  // 🔍 Search Filter
-  const filteredUsers = users.filter((user) => {
-    const query = search.toLowerCase();
+  // 🔍 Filter
+  const processedUsers = useMemo(() => {
+    const q = search.toLowerCase();
 
-    return (
-      user.name?.toLowerCase().includes(query) ||
-      user.email?.toLowerCase().includes(query)
+    let result = users.filter(
+      (u) =>
+        u.name?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q),
     );
-  });
+
+    switch (mode) {
+      // 🔤 Alphabetical
+      case "name":
+        return [...result].sort((a, b) =>
+          (a.name || "").localeCompare(b.name || ""),
+        );
+
+      // 🔢 Age
+      case "age":
+        return [...result].sort((a, b) => (a.age || 0) - (b.age || 0));
+
+      // 🔥 Room OR Group assigned
+      case "assigned-any":
+        return result.filter((u) => (u.roomId && rooms[u.roomId]) || (u.groupId && groups[u.groupId]));
+
+      // 🔥 Room AND Group assigned
+      case "assigned-both":
+        return result.filter((u) => (u.roomId && rooms[u.roomId]) && (u.groupId && groups[u.groupId]));
+
+      // ❌ None assigned
+      case "unassigned":
+        return result.filter((u) => !u.roomId && !u.groupId && !groups[u.groupId]);
+
+      case "male":
+        return result.filter((u) => u.gender.toLowerCase() === 'male');
+
+      case "female":
+        return result.filter((u) => u.gender.toLowerCase() === 'female');
+
+      default:
+        return result;
+    }
+  }, [users, search, mode]);
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 p-10">
-      <h1 className="text-3xl font-semibold mb-6 tracking-tight">
-        Delegates
-      </h1>
+      <h1 className="text-3xl font-semibold mb-6">Delegates</h1>
 
       <p className="text-xs text-zinc-400 mb-2">
-        {filteredUsers.length} members found
+        {processedUsers.length} members
       </p>
 
       {/* 🔍 Search */}
-      <input
+      {/* <input
         type="text"
         placeholder="Search by name, email..."
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        className="mb-4 w-full max-w-md bg-zinc-900 border border-zinc-800 text-zinc-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-600"
-      />
+        className="mb-4 w-full max-w-md bg-zinc-900 border border-zinc-800 text-zinc-200 rounded-md px-3 py-2 text-sm focus:outline-none"
+      /> */}
 
+      <div className="flex flex-col sm:flex-row gap-3 mb-4">
+        {/* 🔍 Search */}
+        <input
+          type="text"
+          placeholder="Search by name, email..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full max-w-md bg-zinc-900 border border-zinc-800 text-zinc-200 rounded-md px-3 py-2 text-sm focus:outline-none"
+        />
+
+        {/* 🔽 Mode Select */}
+        <select
+          value={mode}
+          onChange={(e) => setMode(e.target.value)}
+          className="bg-zinc-900 border border-zinc-800 text-zinc-200 rounded-md px-3 py-2 text-sm focus:outline-none"
+        >
+          <option value="name">Sort: Name (A–Z)</option>
+          <option value="age">Sort: Age</option>
+          <option value="assigned-any">Filter: Room OR Group Assigned</option>
+          <option value="assigned-both">Filter: Room AND Group Assigned</option>
+          <option value="unassigned">Filter: None Assigned</option>
+          <option value="male">Filter: Male</option>
+          <option value="female">Filter: Female</option>
+        </select>
+      </div>
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {filteredUsers.map((user) => (
-          <div
-            key={user._id}
-            className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 shadow-sm transition-all duration-300"
-          >
-            {/* Avatar */}
-            <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-sm font-medium mb-3">
-              {user.name?.charAt(0)?.toUpperCase() || "U"}
-            </div>
-
-            {/* Name */}
-            <div className="text-base font-medium text-zinc-100">
-              {user.name || "No Name"}
-            </div>
-
-            {/* Email */}
-            <div className="text-sm text-zinc-400 mt-1">
-              {user.email || "No Email"}
-            </div>
-
-            {/* 🔽 ROOM DROPDOWN */}
-            <select
-              defaultValue=""
-              onChange={(e) =>
-                assignRoom(user._id, e.target.value)
-              }
-              className="mt-4 w-full bg-zinc-950 border border-zinc-800 text-zinc-200 rounded-md px-3 py-2 text-sm"
+        {processedUsers.length > 0 ? (
+          processedUsers.map((user) => (
+            <div
+              key={user._id}
+              className="bg-zinc-900 border border-zinc-800 rounded-xl p-5"
             >
-              <option value="">Select Room</option>
+              {/* Avatar */}
+              <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center mb-3">
+                {user.name?.charAt(0)?.toUpperCase() || "U"}
+              </div>
 
-              {Object.entries(rooms).map(([id, name]) => (
-                <option key={id} value={id}>
-                  {name}
-                </option>
-              ))}
-            </select>
-
-            {/* 🔽 GROUP DROPDOWN */}
-            <select
-              defaultValue=""
-              onChange={(e) =>
-                assignGroup(user._id, e.target.value)
-              }
-              className="mt-2 w-full bg-zinc-950 border border-zinc-800 text-zinc-200 rounded-md px-3 py-2 text-sm"
-            >
-              <option value="">Select Group</option>
-
-              {Object.entries(groups).map(([id, name]) => (
-                <option key={id} value={id}>
-                  {name}
-                </option>
-              ))}
-            </select>
-
-            {/* ⏳ Loading */}
-            {loadingUserId === user._id && (
-              <p className="text-xs text-zinc-400 mt-2">
-                Updating...
+              <p className="font-medium">
+                {user.name},{" "}
+                <span className="text-zinc-400">{user.age || "N/A"}</span>
               </p>
-            )}
 
-            {/* 🏷 Room */}
-            {user.roomId && rooms[user.roomId] && (
-              <p className="text-xs text-zinc-300 mt-2">
-                Room: {rooms[user.roomId]}
-              </p>
-            )}
+              <p className="text-sm text-zinc-400 mt-2">{user.email || '-'}</p>
 
-            {/* 🏷 Group */}
-            {user.groupId && groups[user.groupId] && (
-              <p className="text-xs text-zinc-300 mt-1">
-                Group: {groups[user.groupId]}
-              </p>
-            )}
-          </div>
-        ))}
+              {/* Labels */}
+              {user.roomId && rooms[user.roomId] && (
+                <p className="text-xs mt-3 text-zinc-400">
+                  <b>Room:</b> {rooms[user.roomId] || "Unassigned"}
+                </p>
+              )}
+
+              {user.groupId && groups[user.groupId] && (
+                <p className="text-xs text-zinc-400">
+                  <b>Group:</b> {groups[user.groupId] || "Unassigned"}
+                </p>
+              )}
+
+              {/* 🔥 ASSIGN BUTTON */}
+              <Dialog>
+                <DialogTrigger asChild>
+                  <button className="mt-4 w-full bg-zinc-800 hover:bg-zinc-700 text-sm py-2 rounded-md">
+                    Assign Room / Group
+                  </button>
+                </DialogTrigger>
+
+                {/* <DialogContent className="bg-zinc-900 border border-zinc-800 text-zinc-100"> */}
+                <DialogContent
+                  className="
+    bg-zinc-900 
+    border border-zinc-800 
+    text-zinc-100 
+    outline-none 
+    focus:outline-none 
+    focus:ring-0 
+    focus-visible:ring-0 
+    ring-0 
+    shadow-none
+  "
+                >
+                  <DialogHeader>
+                    <DialogTitle>Assign for {user.name}</DialogTitle>
+                  </DialogHeader>
+
+                  {/* ROOM */}
+                  <select
+                    value={user.roomId || ""}
+                    onChange={(e) => assignRoom(user._id, e.target.value)}
+                    className="mt-4 w-full bg-zinc-950 border border-zinc-800 text-zinc-200 rounded-md px-3 py-2 text-sm focus:outline-none"
+                  >
+                    <option value="">Select Room</option>
+                    {Object.entries(rooms).map(([id, name]) => (
+                      <option key={id} value={id}>
+                        {name}
+                      </option>
+                    ))}
+                  </select>
+
+                  {/* GROUP */}
+                  <select
+                    value={user.groupId || ""}
+                    onChange={(e) => assignGroup(user._id, e.target.value)}
+                    className="mt-2 w-full bg-zinc-950 border border-zinc-800 text-zinc-200 rounded-md px-3 py-2 text-sm focus:outline-none"
+                  >
+                    <option value="">Select Group</option>
+                    {Object.entries(groups).map(([id, name]) => (
+                      <option key={id} value={id}>
+                        {name}
+                      </option>
+                    ))}
+                  </select>
+
+                  <DialogClose asChild>
+                    <button className="bg-zinc-800 px-4 py-2 rounded-md text-sm">
+                      Close
+                    </button>
+                  </DialogClose>
+                </DialogContent>
+              </Dialog>
+
+              {loadingUserId === user._id && (
+                <p className="text-xs text-zinc-500 mt-2">Updating...</p>
+              )}
+            </div>
+          ))
+        ) : (
+          <p className="text-white text-lg font-semibold">
+            No Delegates Found!
+          </p>
+        )}
       </div>
     </div>
   );
