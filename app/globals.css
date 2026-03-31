@@ -38,3 +38,12 @@ div:focus {
   outline: none !important;
   box-shadow: none !important;
 }
+
+[role="dialog"]:focus {
+  outline: none;
+}
+
+.content-dialog {
+  outline: none !important;
+  box-shadow: none !important;
+}

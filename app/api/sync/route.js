@@ -118,7 +118,7 @@ export async function GET() {
           age: item.Age ? Number(item.Age) : null,
           gender: item.Gender?.trim() || null,
           phone: item.Phone?.trim() || null,
-          churchName: item["Church Name"]?.trim() || null,
+          churchName: item["Church"]?.trim() || null,
         };
       })
       .filter(Boolean); // remove nulls
