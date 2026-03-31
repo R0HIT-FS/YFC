@@ -737,7 +737,8 @@ export default function UsersClient({ users: initialUsers }) {
     let result = users.filter(
       (u) =>
         u.name?.toLowerCase().includes(q) ||
-        u.email?.toLowerCase().includes(q)
+        u.churchName?.toLowerCase().includes(q) || 
+        u.age?.toString().includes(q)
     );
 
     switch (mode) {
@@ -796,13 +797,13 @@ export default function UsersClient({ users: initialUsers }) {
           placeholder="Search by name, church..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="bg-zinc-900 border border-zinc-800 px-3 py-2 rounded-md"
+          className="bg-zinc-900 border border-zinc-800 px-3 py-2 rounded-md w-full max-w-md focus:outline-none"
         />
 
         <select
           value={mode}
           onChange={(e) => setMode(e.target.value)}
-          className="bg-zinc-900 border border-zinc-800 px-3 py-2 rounded-md"
+          className="bg-zinc-900 border border-zinc-800 px-3 py-2 rounded-md focus:outline-none"
         >
           <option value="name">Sort By : Name (A-Z)</option>
           <option value="age">Sort By : Age</option>
