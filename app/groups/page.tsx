@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import clientPromise from "../lib/db";
 import GroupCard from "../../components/GroupCard";
 import CreateGroup from "@/components/CreateGroup";
-import { useAutoRefresh } from "../hooks/useAutoRefresh";
+import RefreshHandler from "@/components/RefreshHandler";
 
 async function getData() {
   try {
@@ -39,7 +39,6 @@ async function getData() {
 
 export default async function GroupsPage() {
   const { groups, users } = await getData();
-    useAutoRefresh();
   
 
   return (
@@ -63,6 +62,7 @@ export default async function GroupsPage() {
           <p className="text-zinc-500 italic">No groups found.</p>
         )}
       </div>
+      <RefreshHandler />
     </div>
   );
 }

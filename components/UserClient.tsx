@@ -855,6 +855,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Maximize2 } from "lucide-react";
 import React from "react";
+import RefreshHandler from "./RefreshHandler";
 
 interface User {
   _id: string;
@@ -1207,6 +1208,7 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
           />
         ))}
       </div>
+      <RefreshHandler />
     </div>
   );
 }
