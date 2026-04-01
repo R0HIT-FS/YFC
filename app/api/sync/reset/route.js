@@ -19,7 +19,7 @@ export async function GET() {
       age: item.Age ? Number(item.Age) : null,
       gender: item.Gender?.trim(),
       phone: item.Phone?.trim(),
-      churchName: item["Church Name"]?.trim(),
+      churchName: item["Church"]?.trim(),
       roomId: null,   // reset
       groupId: null,  // reset
     }));
