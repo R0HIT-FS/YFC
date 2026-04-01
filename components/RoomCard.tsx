@@ -209,14 +209,14 @@ import {
 import { toast } from "sonner";
 
 interface User {
-  _id?: string;
+  _id?: string | null | undefined;
   name?: string;
   roomId?: string | null;
   groupId?: string | null;
 }
 
 interface Room {
-  _id?: string;
+  _id?: string | null | undefined;
   name?: string;
   limit?: number;
 }
@@ -248,7 +248,7 @@ export default function RoomCard({ room, users }: RoomCardProps) {
     }
   };
 
-  const removeUser = async (userId: string) => {
+  const removeUser = async (userId: string | null | undefined) => {
     const res = await fetch("/api/remove-from-room", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

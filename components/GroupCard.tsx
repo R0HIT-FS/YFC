@@ -290,14 +290,14 @@ import { toast } from "sonner";
 import { CircleMinus } from "lucide-react";
 
 interface User {
-  _id?: string;
+  _id?: string | null | undefined;
   name?: string;
   groupId?: string | null;
   roomId?: string | null;
 }
 
 interface Group {
-  _id?: string;
+  _id?: string | null | undefined;
   name?: string;
 }
 
@@ -311,7 +311,7 @@ export default function GroupCard({ group, users }: GroupCardProps) {
 
   const groupUsers = users.filter((u) => u.groupId === group._id);
 
-  const removeUser = async (userId: string) => {
+  const removeUser = async (userId: string | null | undefined) => {
     const res = await fetch("/api/remove-from-group", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
