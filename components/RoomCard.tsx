@@ -18,16 +18,16 @@ import { toast } from "sonner";
 
 // Optimized Interfaces
 interface User {
-  _id: string; // Required for stable keys/filtering
-  name: string;
+  _id?: string | null | undefined;
+  name?: string | null | undefined;
   roomId?: string | null;
   groupId?: string | null;
 }
 
 interface Room {
-  _id: string;
-  name: string;
-  limit: number;
+  _id?: string | null | undefined;
+  name?: string | null | undefined;
+  limit?: number | null | undefined;
 }
 
 interface RoomCardProps {
@@ -46,7 +46,7 @@ export default function RoomCard({ room, users: initialUsers }: RoomCardProps) {
 
   const roomUsers = localUsers.filter((user) => user.roomId === room._id);
 
-  const removeUser = async (userId: string) => {
+  const removeUser = async (userId: string | null | undefined) => {
     const originalUsers = localUsers;
 
     // 1. Optimistic Update
