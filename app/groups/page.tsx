@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import clientPromise from "../lib/db";
 import GroupCard from "../../components/GroupCard";
 import CreateGroup from "@/components/CreateGroup";
+import { useAutoRefresh } from "../hooks/useAutoRefresh";
 
 async function getData() {
   try {
@@ -38,6 +39,8 @@ async function getData() {
 
 export default async function GroupsPage() {
   const { groups, users } = await getData();
+    useAutoRefresh();
+  
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 p-10">

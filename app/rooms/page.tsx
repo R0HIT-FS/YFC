@@ -4,6 +4,7 @@ export const dynamic = "force-dynamic";
 import CreateRoom from "@/components/CreateRoom";
 import clientPromise from "../lib/db";
 import RoomCard from "@/components/RoomCard";
+import { useAutoRefresh } from "../hooks/useAutoRefresh";
 
 // 1. Define Interfaces to match your DB schema and RoomCard props
 interface User {
@@ -49,6 +50,7 @@ async function getData() {
 
 export default async function RoomsPage() {
   const { rooms, users } = await getData();
+  useAutoRefresh();
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 p-10">
