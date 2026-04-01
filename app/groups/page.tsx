@@ -42,7 +42,7 @@ export default async function GroupsPage() {
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 p-10">
       <h2 className="text-3xl font-semibold mb-8">Create A Group</h2>
-      <CreateGroup group={groups} />
+      <CreateGroup />
 
       <h2 className="text-3xl font-semibold mb-8 mt-10">Groups</h2>
       
