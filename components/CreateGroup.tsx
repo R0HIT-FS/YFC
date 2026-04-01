@@ -36,17 +36,17 @@ export default function CreateGroup() {
   };
 
   return (
-    <div className="mb-6 flex gap-3 items-center">
+    <div className="mb-6 flex flex-col md:flex-row gap-3 items-center">
       <input
         type="text"
         placeholder="Group name"
         value={name}
         onChange={(e) => setName(e.target.value)}
-        className="px-3 py-2 rounded-md bg-zinc-900 border border-zinc-800 text-zinc-200 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-600"
+        className="w-full md:w-max px-3 py-2 rounded-md bg-zinc-900 border border-zinc-800 text-zinc-200 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-600"
       />
       <button
         onClick={handleCreate}
-        className="bg-white text-black px-4 py-2 rounded-md text-sm font-medium hover:bg-zinc-200 transition-colors"
+        className="w-full md:w-max bg-white text-black px-4 py-2 rounded-md text-sm font-medium hover:bg-zinc-200 transition-colors"
       >
         Create Group
       </button>

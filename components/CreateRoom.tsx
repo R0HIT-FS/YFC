@@ -51,7 +51,7 @@ export default function CreateRoom() {
   };
 
   return (
-    <div style={{ marginBottom: "20px" }}>
+    <div style={{ marginBottom: "20px" }} className="flex flex-col md:flex-row gap-3 items-center">
       <input
         type="text"
         placeholder="Room name"
@@ -59,11 +59,11 @@ export default function CreateRoom() {
         onChange={(e) => setName(e.target.value)}
         style={{
           padding: "8px",
-          marginRight: "10px",
           borderRadius: "6px",
           border: "1px solid #ccc",
           color: "white",
         }}
+        className="w-full md:w-max"
       />
 
       <input
@@ -73,16 +73,16 @@ export default function CreateRoom() {
         onChange={(e) => setLimit(e.target.value)}
         style={{
           padding: "8px",
-          marginRight: "10px",
           borderRadius: "6px",
           border: "1px solid #ccc",
           color: "white",
         }}
+        className="w-full md:w-max"
       />
 
       <button
         onClick={handleCreate}
-        className="bg-white text-black px-4 py-2 rounded-sm"
+        className="w-full md:w-max bg-white text-black px-4 py-2 rounded-sm"
       >
         Create Room
       </button>

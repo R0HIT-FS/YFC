@@ -1169,13 +1169,13 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
 
       <p className="text-md text-zinc-400 mb-2">{processedUsers.length} members</p>
 
-      <div className="flex gap-3 mb-4">
+      <div className="flex flex-col md:flex-row gap-3 mb-4">
         <input
           type="text"
           placeholder="Search by name, church..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="bg-zinc-900 border border-zinc-800 px-3 py-2 rounded-md w-full max-w-md focus:outline-none"
+          className="w-full md:w-max bg-zinc-900 border border-zinc-800 px-3 py-2 rounded-md w-full max-w-md focus:outline-none"
         />
 
         <select
