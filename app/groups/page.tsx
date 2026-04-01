@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic"; // Ensures fresh data on every request
+
 import clientPromise from "../lib/db";
 import GroupCard from "../../components/GroupCard";
 import CreateGroup from "@/components/CreateGroup";

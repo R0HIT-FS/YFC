@@ -1,4 +1,5 @@
 import clientPromise from "../../../lib/db";
+import { revalidatePath } from "next/cache";
 
 export async function POST(req) {
   try {
@@ -30,6 +31,8 @@ export async function POST(req) {
       name: name.trim(), // 👈 leader name stored here
       createdAt: new Date(),
     });
+
+    revalidatePath("/groups");
 
     return Response.json({
       success: true,
