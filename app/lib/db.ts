@@ -6,8 +6,8 @@ if (!uri) {
   throw new Error("Please add MONGODB_URI to .env.local");
 }
 
-let client;
-let clientPromise;
+let client:MongoClient;
+let clientPromise: Promise<MongoClient>;
 
 if (!global._mongoClientPromise) {
   client = new MongoClient(uri);
