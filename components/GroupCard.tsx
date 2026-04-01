@@ -290,15 +290,15 @@ import { toast } from "sonner";
 import { CircleMinus } from "lucide-react";
 
 interface User {
-  _id: string;
-  name: string;
-  groupId: string | null;
-  roomId: string | null;
+  _id?: string;
+  name?: string;
+  groupId?: string | null;
+  roomId?: string | null;
 }
 
 interface Group {
-  _id: string;
-  name: string;
+  _id?: string;
+  name?: string;
 }
 
 interface GroupCardProps {

@@ -209,16 +209,16 @@ import {
 import { toast } from "sonner";
 
 interface User {
-  _id: string;
-  name: string;
-  roomId: string | null;
-  groupId: string | null;
+  _id?: string;
+  name?: string;
+  roomId?: string | null;
+  groupId?: string | null;
 }
 
 interface Room {
-  _id: string;
-  name: string;
-  limit: number;
+  _id?: string;
+  name?: string;
+  limit?: number;
 }
 
 interface RoomCardProps {
