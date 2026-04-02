@@ -239,14 +239,14 @@
 //                 {/* <DialogContent className="bg-zinc-900 border border-zinc-800 text-zinc-100"> */}
 //                 <DialogContent
 //                   className="
-//     bg-zinc-900 
-//     border border-zinc-800 
-//     text-zinc-100 
-//     outline-none 
-//     focus:outline-none 
-//     focus:ring-0 
-//     focus-visible:ring-0 
-//     ring-0 
+//     bg-zinc-900
+//     border border-zinc-800
+//     text-zinc-100
+//     outline-none
+//     focus:outline-none
+//     focus:ring-0
+//     focus-visible:ring-0
+//     ring-0
 //     shadow-none
 //   "
 //                 >
@@ -318,7 +318,7 @@
 //         </DialogFooter>
 //       </DialogContent>
 //     </Dialog>
-                
+
 //               </div> */}
 //               <div className="expand absolute top-3 right-3">
 //                 <Dialog>
@@ -418,8 +418,6 @@
 //   );
 // }
 
-
-
 // "use client";
 
 // import { useEffect, useState, useMemo, useCallback } from "react";
@@ -440,7 +438,6 @@
 // import { Maximize2 } from "lucide-react";
 
 // import React from "react";
-
 
 // // 🔥 Memoized User Card (BIG PERFORMANCE WIN)
 // const UserCard = React.memo(function UserCard({
@@ -600,7 +597,6 @@
 //   );
 // });
 
-
 // // 🔥 MAIN COMPONENT
 // export default function UsersClient({ users: initialUsers }) {
 //   const [users, setUsers] = useState(initialUsers);
@@ -737,7 +733,7 @@
 //     let result = users.filter(
 //       (u) =>
 //         u.name?.toLowerCase().includes(q) ||
-//         u.churchName?.toLowerCase().includes(q) || 
+//         u.churchName?.toLowerCase().includes(q) ||
 //         u.age?.toString().includes(q)
 //     );
 
@@ -835,7 +831,6 @@
 //   );
 // }
 
-
 "use client";
 
 import { useEffect, useState, useMemo, useCallback } from "react";
@@ -902,8 +897,7 @@ const UserCard = React.memo(function UserCard({
       </div>
 
       <p className="font-medium">
-        {user.name},{" "}
-        <span className="text-zinc-400">{user.age || "N/A"}</span>
+        {user.name}, <span className="text-zinc-400">{user.age || "N/A"}</span>
       </p>
 
       <p className="text-sm text-zinc-400 mt-2">{user.churchName || "-"}</p>
@@ -989,7 +983,10 @@ const UserCard = React.memo(function UserCard({
                   { label: "Gender", value: user.gender },
                   { label: "Church", value: user.churchName },
                 ].map(({ label, value }) => (
-                  <div key={label} className="flex justify-between px-4 py-2 text-sm">
+                  <div
+                    key={label}
+                    className="flex justify-between px-4 py-2 text-sm"
+                  >
                     <span className="text-zinc-400">{label}</span>
                     <span className="text-zinc-100">{value || "-"}</span>
                   </div>
@@ -998,10 +995,19 @@ const UserCard = React.memo(function UserCard({
 
               <div className="rounded-lg border border-zinc-800 divide-y divide-zinc-800">
                 {[
-                  { label: "Room", value: user.roomId ? rooms[user.roomId] : null },
-                  { label: "Group", value: user.groupId ? groups[user.groupId] : null },
+                  {
+                    label: "Room",
+                    value: user.roomId ? rooms[user.roomId] : null,
+                  },
+                  {
+                    label: "Group",
+                    value: user.groupId ? groups[user.groupId] : null,
+                  },
                 ].map(({ label, value }) => (
-                  <div key={label} className="flex justify-between px-4 py-2 text-sm">
+                  <div
+                    key={label}
+                    className="flex justify-between px-4 py-2 text-sm"
+                  >
                     <span className="text-zinc-400">{label}</span>
                     <span>{value || "Unassigned"}</span>
                   </div>
@@ -1020,7 +1026,6 @@ const UserCard = React.memo(function UserCard({
     </div>
   );
 });
-
 
 // 🔥 MAIN COMPONENT
 export default function UsersClient({ users: initialUsers }: UsersClientProps) {
@@ -1049,13 +1054,17 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
 
       if (roomsData.success) {
         const map: Record<string, string> = {};
-        roomsData.rooms.forEach((r: { _id: string; name: string }) => (map[r._id] = r.name));
+        roomsData.rooms.forEach(
+          (r: { _id: string; name: string }) => (map[r._id] = r.name),
+        );
         setRooms(map);
       }
 
       if (groupsData.success) {
         const map: Record<string, string> = {};
-        groupsData.groups.forEach((g: { _id: string; name: string }) => (map[g._id] = g.name));
+        groupsData.groups.forEach(
+          (g: { _id: string; name: string }) => (map[g._id] = g.name),
+        );
         setGroups(map);
       }
     };
@@ -1069,66 +1078,82 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
     return map;
   }, [users]);
 
-  const assignRoom = useCallback(async (userId: string, roomId: string) => {
-    const user = userMap.get(userId);
-    if (user?.roomId === roomId) return;
+  const assignRoom = useCallback(
+    async (userId: string, roomId: string) => {
+      const user = userMap.get(userId);
+      if (user?.roomId === roomId) return;
 
-    setLoadingUserId(userId);
+      setLoadingUserId(userId);
 
-    const res = await fetch("/api/assign-room", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId, roomId }),
-    });
+      const res = await fetch("/api/assign-room", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, roomId }),
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (data.success) {
-      toast.success("Room assigned");
-      setUsers((prev) => prev.map((u) => (u._id === userId ? { ...u, roomId } : u)));
-    } else {
-      toast.error(data.error);
-    }
+      if (data.success) {
+        toast.success("Room assigned");
+        setUsers((prev) =>
+          prev.map((u) => (u._id === userId ? { ...u, roomId } : u)),
+        );
+      } else {
+        toast.error(data.error); // 🔥 THIS WAS MISSING
+      }
 
-    setLoadingUserId(null);
-  }, [userMap]);
+      setLoadingUserId(null);
+    },
+    [userMap],
+  );
 
-  const assignGroup = useCallback(async (userId: string, groupId: string) => {
-    const user = userMap.get(userId);
-    if (user?.groupId === groupId) return;
+  const assignGroup = useCallback(
+    async (userId: string, groupId: string) => {
+      const user = userMap.get(userId);
+      if (user?.groupId === groupId) return;
 
-    setLoadingUserId(userId);
+      setLoadingUserId(userId);
 
-    const res = await fetch("/api/assign-group", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId, groupId }),
-    });
+      const res = await fetch("/api/assign-group", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, groupId }),
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (data.success) {
-      toast.success("Group assigned");
-      setUsers((prev) => prev.map((u) => (u._id === userId ? { ...u, groupId } : u)));
-    } else {
-      toast.error(data.error);
-    }
+      if (data.success) {
+        toast.success("Group assigned");
+        setUsers((prev) =>
+          prev.map((u) => (u._id === userId ? { ...u, groupId } : u)),
+        );
+      } else {
+        toast.error(data.error);
+      }
 
-    setLoadingUserId(null);
-  }, [userMap]);
+      setLoadingUserId(null);
+    },
+    [userMap],
+  );
 
   const roomOptions = useMemo(
-    () => Object.entries(rooms).map(([id, name]) => (
-      <option key={id} value={id}>{name}</option>
-    )),
-    [rooms]
+    () =>
+      Object.entries(rooms).map(([id, name]) => (
+        <option key={id} value={id}>
+          {name}
+        </option>
+      )),
+    [rooms],
   );
 
   const groupOptions = useMemo(
-    () => Object.entries(groups).map(([id, name]) => (
-      <option key={id} value={id}>{name}</option>
-    )),
-    [groups]
+    () =>
+      Object.entries(groups).map(([id, name]) => (
+        <option key={id} value={id}>
+          {name}
+        </option>
+      )),
+    [groups],
   );
 
   const processedUsers = useMemo(() => {
@@ -1138,7 +1163,7 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
       (u) =>
         u.name?.toLowerCase().includes(q) ||
         u.churchName?.toLowerCase().includes(q) ||
-        u.age?.toString().includes(q)
+        u.age?.toString().includes(q),
     );
 
     switch (mode) {
@@ -1167,7 +1192,9 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
     <div className="min-h-screen bg-zinc-950 text-zinc-100 p-10">
       <h1 className="text-3xl font-semibold mb-6">Delegates</h1>
 
-      <p className="text-md text-zinc-400 mb-2">{processedUsers.length} members</p>
+      <p className="text-md text-zinc-400 mb-2">
+        {processedUsers.length} members
+      </p>
 
       <div className="flex flex-col md:flex-row gap-3 mb-4">
         <input
