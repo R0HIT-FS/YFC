@@ -203,6 +203,9 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [mode, setMode] = useState("name");
+  const [lastSync, setLastSync] = useState(
+  new Date().toISOString()
+);
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(search), 300);
@@ -238,6 +241,44 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
 
     fetchData();
   }, []);
+
+  useEffect(() => {
+  const interval = setInterval(async () => {
+    if (document.hidden) return;
+
+    try {
+      const res = await fetch(
+        `/api/users/updates?lastSync=${lastSync}`
+      );
+      const data = await res.json();
+
+      if (!data.success || !data.users.length) return;
+
+      setUsers((prev) => {
+        const map = new Map(prev.map((u) => [u._id, u]));
+
+        data.users.forEach((updated: any) => {
+          const existing = map.get(updated._id);
+
+          if (existing) {
+            map.set(updated._id, {
+              ...existing,
+              ...updated,
+            });
+          }
+        });
+
+        return Array.from(map.values());
+      });
+
+      setLastSync(new Date().toISOString());
+    } catch (err) {
+      console.error(err);
+    }
+  }, 2000); // 2s
+
+  return () => clearInterval(interval);
+}, [lastSync]);
 
   const userMap = useMemo(() => {
     const map = new Map<string, User>();

@@ -2,49 +2,75 @@ import clientPromise from "../../lib/db";
 import { ObjectId } from "mongodb";
 
 export async function POST(req) {
+  const client = await clientPromise;
+  const session = client.startSession();
+
   try {
     const { userId, roomId } = await req.json();
 
-    const client = await clientPromise;
+    if (!userId || !roomId) {
+      return Response.json({
+        success: false,
+        error: "Missing userId or roomId",
+      });
+    }
+
     const db = client.db("yfc");
+    const users = db.collection("users");
+    const rooms = db.collection("rooms");
 
-    const usersCollection = db.collection("users");
-    const roomsCollection = db.collection("rooms");
-
+    const userObjectId = new ObjectId(userId);
     const roomObjectId = new ObjectId(roomId);
 
-    // 🔥 1. Get room
-    const room = await roomsCollection.findOne({ _id: roomObjectId });
+    await session.withTransaction(async () => {
+      const room = await rooms.findOne(
+        { _id: roomObjectId },
+        { session }
+      );
 
-    if (!room) {
-      return Response.json({
-        success: false,
-        error: "Room not found",
-      });
-    }
+      if (!room) throw new Error("Room not found");
 
-    // 🔥 2. Count users in room
-    const count = await usersCollection.countDocuments({
-      roomId: roomObjectId,
-    });
-
-    // 🔥 3. Check limit
-    if (count >= room.limit) {
-      return Response.json({
-        success: false,
-        error: "Room is full",
-      });
-    }
-
-    // 🔥 4. Assign user
-    await usersCollection.updateOne(
-      { _id: new ObjectId(userId) },
-      {
-        $set: {
-          roomId: roomObjectId,
-        },
+      if ((room.currentCount || 0) >= room.limit) {
+        throw new Error("Room is full");
       }
-    );
+
+      const user = await users.findOne(
+        { _id: userObjectId },
+        { session }
+      );
+
+      if (!user) throw new Error("User not found");
+
+      const prevRoomId = user.roomId;
+
+      // ✅ Update user + timestamp
+      await users.updateOne(
+        { _id: userObjectId },
+        {
+          $set: {
+            roomId: roomObjectId,
+            updatedAt: new Date(),
+          },
+        },
+        { session }
+      );
+
+      // ✅ Increment new room
+      await rooms.updateOne(
+        { _id: roomObjectId },
+        { $inc: { currentCount: 1 } },
+        { session }
+      );
+
+      // ✅ Decrement previous room
+      if (prevRoomId) {
+        await rooms.updateOne(
+          { _id: prevRoomId },
+          { $inc: { currentCount: -1 } },
+          { session }
+        );
+      }
+    });
 
     return Response.json({ success: true });
   } catch (err) {
@@ -52,5 +78,7 @@ export async function POST(req) {
       success: false,
       error: err.message,
     });
+  } finally {
+    await session.endSession();
   }
 }
