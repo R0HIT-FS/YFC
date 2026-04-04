@@ -41,9 +41,9 @@ export async function POST(req) {
 
       if (!user) throw new Error("User not found");
 
-      const prevRoomId = user.roomId;
+      const previousRoomId = user.roomId;
 
-      // ✅ Update user + timestamp
+      // 🔥 update user
       await users.updateOne(
         { _id: userObjectId },
         {
@@ -55,18 +55,24 @@ export async function POST(req) {
         { session }
       );
 
-      // ✅ Increment new room
+      // 🔥 increment new room
       await rooms.updateOne(
         { _id: roomObjectId },
-        { $inc: { currentCount: 1 } },
+        {
+          $inc: { currentCount: 1 },
+          $set: { updatedAt: new Date() },
+        },
         { session }
       );
 
-      // ✅ Decrement previous room
-      if (prevRoomId) {
+      // 🔥 decrement previous room
+      if (previousRoomId) {
         await rooms.updateOne(
-          { _id: prevRoomId },
-          { $inc: { currentCount: -1 } },
+          { _id: previousRoomId },
+          {
+            $inc: { currentCount: -1 },
+            $set: { updatedAt: new Date() },
+          },
           { session }
         );
       }

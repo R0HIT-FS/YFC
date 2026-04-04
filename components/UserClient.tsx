@@ -242,40 +242,64 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
     fetchData();
   }, []);
 
-  useEffect(() => {
+useEffect(() => {
   const interval = setInterval(async () => {
     if (document.hidden) return;
 
     try {
       const res = await fetch(
-        `/api/users/updates?lastSync=${lastSync}`
+        `/api/updates?lastSync=${lastSync}`
       );
       const data = await res.json();
 
-      if (!data.success || !data.users.length) return;
+      if (!data.success) return;
 
-      setUsers((prev) => {
-        const map = new Map(prev.map((u) => [u._id, u]));
+      // USERS
+      if (data.users?.length) {
+        setUsers((prev) => {
+          const map = new Map(prev.map((u) => [u._id, u]));
 
-        data.users.forEach((updated: any) => {
-          const existing = map.get(updated._id);
+          data.users.forEach((updated: any) => {
+            const existing = map.get(updated._id);
+            if (existing) {
+              map.set(updated._id, {
+                ...existing,
+                ...updated,
+              });
+            }
+          });
 
-          if (existing) {
-            map.set(updated._id, {
-              ...existing,
-              ...updated,
-            });
-          }
+          return Array.from(map.values());
         });
+      }
 
-        return Array.from(map.values());
-      });
+      // ROOMS
+      if (data.rooms?.length) {
+        setRooms((prev) => {
+          const map = { ...prev };
+          data.rooms.forEach((r: any) => {
+            map[r._id] = r.name;
+          });
+          return map;
+        });
+      }
+
+      // GROUPS
+      if (data.groups?.length) {
+        setGroups((prev) => {
+          const map = { ...prev };
+          data.groups.forEach((g: any) => {
+            map[g._id] = g.name;
+          });
+          return map;
+        });
+      }
 
       setLastSync(new Date().toISOString());
     } catch (err) {
       console.error(err);
     }
-  }, 2000); // 2s
+  }, 2000);
 
   return () => clearInterval(interval);
 }, [lastSync]);
