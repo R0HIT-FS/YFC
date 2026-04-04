@@ -42,7 +42,7 @@ export async function POST(req) {
       {
         $set: {
           groupId: groupObjectId,
-          updatedAt: new Date(), // 🔥 important
+          updatedAt: new Date(),
         },
       }
     );
