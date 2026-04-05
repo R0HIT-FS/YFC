@@ -6,6 +6,10 @@ async function getUsers() {
   return res.json();
 }
 
+export const metadata = {
+  title: "Saviour Of Sinners",
+};
+
 export default async function Home() {
   const data = await getUsers();
   const users = data.users || [];

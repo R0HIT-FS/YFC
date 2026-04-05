@@ -131,6 +131,10 @@ async function getData() {
   }
 }
 
+export const metadata = {
+  title: "Groups - Saviour Of Sinners",
+};
+
 export default async function GroupsPage() {
   const { groups, usersByGroup } = await getData();
 

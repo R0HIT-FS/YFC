@@ -133,6 +133,10 @@ async function getData() {
   };
 }
 
+export const metadata = {
+  title: "Rooms - Saviour Of Sinners",
+};
+
 export default async function RoomsPage() {
   const { rooms, usersByRoom } = await getData();
 
