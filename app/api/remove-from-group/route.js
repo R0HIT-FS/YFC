@@ -36,7 +36,6 @@
 //   }
 // }
 
-
 import clientPromise from "../../lib/db";
 import { ObjectId } from "mongodb";
 import { revalidatePath } from "next/cache"; // 1. Import this
@@ -55,14 +54,16 @@ export async function POST(req) {
     await db.collection("users").updateOne(
       { _id: new ObjectId(userId) },
       // { $unset: { groupId: "" } }
-      $set: {
-  groupId: null,
-  updatedAt: new Date(),
-}
+      {
+        $set: {
+          groupId: null,
+          updatedAt: new Date(),
+        },
+      },
     );
 
     // 2. Clear the cache for the groups page
-    revalidatePath("/groups"); 
+    revalidatePath("/groups");
 
     return Response.json({
       success: true,
