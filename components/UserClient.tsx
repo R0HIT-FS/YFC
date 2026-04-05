@@ -203,9 +203,7 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [mode, setMode] = useState("name");
-  const [lastSync, setLastSync] = useState(
-  new Date().toISOString()
-);
+  const [lastSync, setLastSync] = useState(new Date().toISOString());
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(search), 300);
@@ -242,54 +240,69 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
     fetchData();
   }, []);
 
-useEffect(() => {
-  let lastSyncRef = new Date().toISOString();
+  useEffect(() => {
+    let lastSyncRef = new Date().toISOString();
 
-  const poll = async () => {
-    if (document.hidden) return;
+    const poll = async () => {
+      if (document.hidden) return;
 
-    try {
-      const res = await fetch(
-        `/api/users/updates?lastSync=${lastSyncRef}`
-      );
-      const data = await res.json();
+      try {
+        const res = await fetch(`/api/users/updates?lastSync=${lastSyncRef}`);
+        const data = await res.json();
 
-      if (!data.success || !data.users.length) return;
+        if (!data.success || !data.users.length) return;
 
-      setUsers((prev) => {
-        let changed = false;
-        const map = new Map(prev.map((u) => [u._id, u]));
+        // setUsers((prev) => {
+        //   let changed = false;
+        //   const map = new Map(prev.map((u) => [u._id, u]));
 
-        data.users.forEach((updated: any) => {
-          const existing = map.get(updated._id);
+        //   data.users.forEach((updated: any) => {
+        //     const existing = map.get(updated._id);
 
-          // 🔥 ONLY update if actually changed
-          if (
-            existing &&
-            (existing.roomId !== updated.roomId ||
-              existing.groupId !== updated.groupId)
-          ) {
-            map.set(updated._id, {
-              ...existing,
-              ...updated,
-            });
-            changed = true;
-          }
+        //     // 🔥 ONLY update if actually changed
+        //     if (
+        //       existing &&
+        //       (existing.roomId !== updated.roomId ||
+        //         existing.groupId !== updated.groupId)
+        //     ) {
+        //       map.set(updated._id, {
+        //         ...existing,
+        //         ...updated,
+        //       });
+        //       changed = true;
+        //     }
+        //   });
+
+        //   return changed ? Array.from(map.values()) : prev;
+        // });
+
+        setUsers((prev) => {
+          const map = new Map(prev.map((u) => [u._id, u]));
+
+          data.users.forEach((updated: any) => {
+            const existing = map.get(updated._id);
+
+            if (existing) {
+              map.set(updated._id, {
+                ...existing,
+                ...updated, // 🔥 merge only changed fields
+              });
+            }
+          });
+
+          return Array.from(map.values());
         });
 
-        return changed ? Array.from(map.values()) : prev;
-      });
+        lastSyncRef = new Date().toISOString();
+      } catch (err) {
+        console.error(err);
+      }
+    };
 
-      lastSyncRef = new Date().toISOString();
-    } catch (err) {
-      console.error(err);
-    }
-  };
+    const interval = setInterval(poll, 5000);
 
-  const interval = setInterval(poll, 2000);
-
-  return () => clearInterval(interval);
-}, []);
+    return () => clearInterval(interval);
+  }, []);
 
   const userMap = useMemo(() => {
     const map = new Map<string, User>();
@@ -327,44 +340,42 @@ useEffect(() => {
   // );
 
   const assignRoom = useCallback(
-  async (userId: string, roomId: string) => {
-    const user = userMap.get(userId);
-    if (user?.roomId === roomId) return;
+    async (userId: string, roomId: string) => {
+      const user = userMap.get(userId);
+      if (user?.roomId === roomId) return;
 
-    setLoadingUserId(userId);
+      setLoadingUserId(userId);
 
-    try {
-      const res = await fetch("/api/assign-room", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, roomId }),
-      });
+      try {
+        const res = await fetch("/api/assign-room", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId, roomId }),
+        });
 
-      const data = await res.json();
+        const data = await res.json();
 
-      if (!data.success) {
-        toast.error(data.error);
-        return;
+        if (!data.success) {
+          toast.error(data.error);
+          return;
+        }
+
+        // 🔥 optimistic update ONLY if needed
+        setUsers((prev) =>
+          prev.map((u) =>
+            u._id === userId && u.roomId !== roomId ? { ...u, roomId } : u,
+          ),
+        );
+
+        toast.success("Room assigned");
+      } catch {
+        toast.error("Something went wrong");
+      } finally {
+        setLoadingUserId(null);
       }
-
-      // 🔥 optimistic update ONLY if needed
-      setUsers((prev) =>
-        prev.map((u) =>
-          u._id === userId && u.roomId !== roomId
-            ? { ...u, roomId }
-            : u
-        )
-      );
-
-      toast.success("Room assigned");
-    } catch {
-      toast.error("Something went wrong");
-    } finally {
-      setLoadingUserId(null);
-    }
-  },
-  [userMap]
-);
+    },
+    [userMap],
+  );
 
   // const assignGroup = useCallback(
   //   async (userId: string, groupId: string) => {
@@ -396,48 +407,46 @@ useEffect(() => {
   // );
 
   const assignGroup = useCallback(
-  async (userId: string, groupId: string) => {
-    const user = userMap.get(userId);
-    if (user?.groupId === groupId) return;
+    async (userId: string, groupId: string) => {
+      const user = userMap.get(userId);
+      if (user?.groupId === groupId) return;
 
-    setLoadingUserId(userId);
+      setLoadingUserId(userId);
 
-    try {
-      const res = await fetch("/api/assign-group", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ userId, groupId }),
-      });
+      try {
+        const res = await fetch("/api/assign-group", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ userId, groupId }),
+        });
 
-      const data = await res.json();
+        const data = await res.json();
 
-      if (!data.success) {
-        toast.error(data.error);
-        return;
+        if (!data.success) {
+          toast.error(data.error);
+          return;
+        }
+
+        // 🔥 Optimized optimistic update (only if needed)
+        setUsers((prev) =>
+          prev.map((u) =>
+            u._id === userId && u.groupId !== groupId ? { ...u, groupId } : u,
+          ),
+        );
+
+        toast.success("Group assigned");
+      } catch (err) {
+        console.error(err);
+        toast.error("Something went wrong");
+      } finally {
+        setLoadingUserId(null);
       }
+    },
+    [userMap],
+  );
 
-      // 🔥 Optimized optimistic update (only if needed)
-      setUsers((prev) =>
-        prev.map((u) =>
-          u._id === userId && u.groupId !== groupId
-            ? { ...u, groupId }
-            : u
-        )
-      );
-
-      toast.success("Group assigned");
-    } catch (err) {
-      console.error(err);
-      toast.error("Something went wrong");
-    } finally {
-      setLoadingUserId(null);
-    }
-  },
-  [userMap]
-);
-  
   const roomOptions = useMemo(
     () =>
       Object.entries(rooms).map(([id, name]) => (
@@ -491,40 +500,40 @@ useEffect(() => {
   // }, [users, debouncedSearch, mode]);
 
   const processedUsers = useMemo(() => {
-  const q = debouncedSearch.trim().toLowerCase();
+    const q = debouncedSearch.trim().toLowerCase();
 
-  let result = users;
+    let result = users;
 
-  if (q) {
-    result = users.filter(
-      (u) =>
-        u.name?.toLowerCase().includes(q) ||
-        u.churchName?.toLowerCase().includes(q) ||
-        u.age?.toString().includes(q),
-    );
-  }
-
-  switch (mode) {
-    case "name":
-      return [...result].sort((a, b) =>
-        (a.name || "").localeCompare(b.name || "")
+    if (q) {
+      result = users.filter(
+        (u) =>
+          u.name?.toLowerCase().includes(q) ||
+          u.churchName?.toLowerCase().includes(q) ||
+          u.age?.toString().includes(q),
       );
-    case "age":
-      return [...result].sort((a, b) => (a.age || 0) - (b.age || 0));
-    case "assigned-any":
-      return result.filter((u) => u.roomId || u.groupId);
-    case "assigned-both":
-      return result.filter((u) => u.roomId && u.groupId);
-    case "unassigned":
-      return result.filter((u) => !u.roomId && !u.groupId);
-    case "male":
-      return result.filter((u) => u.gender?.toLowerCase() === "male");
-    case "female":
-      return result.filter((u) => u.gender?.toLowerCase() === "female");
-    default:
-      return result;
-  }
-}, [users, debouncedSearch, mode]);
+    }
+
+    switch (mode) {
+      case "name":
+        return [...result].sort((a, b) =>
+          (a.name || "").localeCompare(b.name || ""),
+        );
+      case "age":
+        return [...result].sort((a, b) => (a.age || 0) - (b.age || 0));
+      case "assigned-any":
+        return result.filter((u) => u.roomId || u.groupId);
+      case "assigned-both":
+        return result.filter((u) => u.roomId && u.groupId);
+      case "unassigned":
+        return result.filter((u) => !u.roomId && !u.groupId);
+      case "male":
+        return result.filter((u) => u.gender?.toLowerCase() === "male");
+      case "female":
+        return result.filter((u) => u.gender?.toLowerCase() === "female");
+      default:
+        return result;
+    }
+  }, [users, debouncedSearch, mode]);
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 p-10">
@@ -559,19 +568,23 @@ useEffect(() => {
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {processedUsers && processedUsers.length > 0 ? processedUsers.map((user) => (
-          <UserCard
-            key={user._id}
-            user={user}
-            rooms={rooms}
-            groups={groups}
-            roomOptions={roomOptions}
-            groupOptions={groupOptions}
-            assignRoom={assignRoom}
-            assignGroup={assignGroup}
-            loadingUserId={loadingUserId}
-          />
-        )) :  <p className="text-zinc-500 italic">No delegates found.</p>}
+        {processedUsers && processedUsers.length > 0 ? (
+          processedUsers.map((user) => (
+            <UserCard
+              key={user._id}
+              user={user}
+              rooms={rooms}
+              groups={groups}
+              roomOptions={roomOptions}
+              groupOptions={groupOptions}
+              assignRoom={assignRoom}
+              assignGroup={assignGroup}
+              loadingUserId={loadingUserId}
+            />
+          ))
+        ) : (
+          <p className="text-zinc-500 italic">No delegates found.</p>
+        )}
       </div>
       <RefreshHandler />
     </div>

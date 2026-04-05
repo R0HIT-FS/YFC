@@ -54,7 +54,11 @@ export async function POST(req) {
 
     await db.collection("users").updateOne(
       { _id: new ObjectId(userId) },
-      { $unset: { groupId: "" } }
+      // { $unset: { groupId: "" } }
+      $set: {
+  groupId: null,
+  updatedAt: new Date(),
+}
     );
 
     // 2. Clear the cache for the groups page
