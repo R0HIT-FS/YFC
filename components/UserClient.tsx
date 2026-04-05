@@ -242,43 +242,54 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
     fetchData();
   }, []);
 
-  useEffect(() => {
-  const interval = setInterval(async () => {
+useEffect(() => {
+  let lastSyncRef = new Date().toISOString();
+
+  const poll = async () => {
     if (document.hidden) return;
 
     try {
       const res = await fetch(
-        `/api/users/updates?lastSync=${lastSync}`
+        `/api/users/updates?lastSync=${lastSyncRef}`
       );
       const data = await res.json();
 
       if (!data.success || !data.users.length) return;
 
       setUsers((prev) => {
+        let changed = false;
         const map = new Map(prev.map((u) => [u._id, u]));
 
         data.users.forEach((updated: any) => {
           const existing = map.get(updated._id);
 
-          if (existing) {
+          // 🔥 ONLY update if actually changed
+          if (
+            existing &&
+            (existing.roomId !== updated.roomId ||
+              existing.groupId !== updated.groupId)
+          ) {
             map.set(updated._id, {
               ...existing,
               ...updated,
             });
+            changed = true;
           }
         });
 
-        return Array.from(map.values());
+        return changed ? Array.from(map.values()) : prev;
       });
 
-      setLastSync(new Date().toISOString());
+      lastSyncRef = new Date().toISOString();
     } catch (err) {
       console.error(err);
     }
-  }, 2000); // 2s
+  };
+
+  const interval = setInterval(poll, 2000);
 
   return () => clearInterval(interval);
-}, [lastSync]);
+}, []);
 
   const userMap = useMemo(() => {
     const map = new Map<string, User>();
@@ -286,13 +297,43 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
     return map;
   }, [users]);
 
+  // const assignRoom = useCallback(
+  //   async (userId: string, roomId: string) => {
+  //     const user = userMap.get(userId);
+  //     if (user?.roomId === roomId) return;
+
+  //     setLoadingUserId(userId);
+
+  //     const res = await fetch("/api/assign-room", {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify({ userId, roomId }),
+  //     });
+
+  //     const data = await res.json();
+
+  //     if (data.success) {
+  //       toast.success("Room assigned");
+  //       setUsers((prev) =>
+  //         prev.map((u) => (u._id === userId ? { ...u, roomId } : u)),
+  //       );
+  //     } else {
+  //       toast.error(data.error); // 🔥 THIS WAS MISSING
+  //     }
+
+  //     setLoadingUserId(null);
+  //   },
+  //   [userMap],
+  // );
+
   const assignRoom = useCallback(
-    async (userId: string, roomId: string) => {
-      const user = userMap.get(userId);
-      if (user?.roomId === roomId) return;
+  async (userId: string, roomId: string) => {
+    const user = userMap.get(userId);
+    if (user?.roomId === roomId) return;
 
-      setLoadingUserId(userId);
+    setLoadingUserId(userId);
 
+    try {
       const res = await fetch("/api/assign-room", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -301,49 +342,102 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
 
       const data = await res.json();
 
-      if (data.success) {
-        toast.success("Room assigned");
-        setUsers((prev) =>
-          prev.map((u) => (u._id === userId ? { ...u, roomId } : u)),
-        );
-      } else {
-        toast.error(data.error); // 🔥 THIS WAS MISSING
+      if (!data.success) {
+        toast.error(data.error);
+        return;
       }
 
+      // 🔥 optimistic update ONLY if needed
+      setUsers((prev) =>
+        prev.map((u) =>
+          u._id === userId && u.roomId !== roomId
+            ? { ...u, roomId }
+            : u
+        )
+      );
+
+      toast.success("Room assigned");
+    } catch {
+      toast.error("Something went wrong");
+    } finally {
       setLoadingUserId(null);
-    },
-    [userMap],
-  );
+    }
+  },
+  [userMap]
+);
+
+  // const assignGroup = useCallback(
+  //   async (userId: string, groupId: string) => {
+  //     const user = userMap.get(userId);
+  //     if (user?.groupId === groupId) return;
+
+  //     setLoadingUserId(userId);
+
+  //     const res = await fetch("/api/assign-group", {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify({ userId, groupId }),
+  //     });
+
+  //     const data = await res.json();
+
+  //     if (data.success) {
+  //       toast.success("Group assigned");
+  //       setUsers((prev) =>
+  //         prev.map((u) => (u._id === userId ? { ...u, groupId } : u)),
+  //       );
+  //     } else {
+  //       toast.error(data.error);
+  //     }
+
+  //     setLoadingUserId(null);
+  //   },
+  //   [userMap],
+  // );
 
   const assignGroup = useCallback(
-    async (userId: string, groupId: string) => {
-      const user = userMap.get(userId);
-      if (user?.groupId === groupId) return;
+  async (userId: string, groupId: string) => {
+    const user = userMap.get(userId);
+    if (user?.groupId === groupId) return;
 
-      setLoadingUserId(userId);
+    setLoadingUserId(userId);
 
+    try {
       const res = await fetch("/api/assign-group", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ userId, groupId }),
       });
 
       const data = await res.json();
 
-      if (data.success) {
-        toast.success("Group assigned");
-        setUsers((prev) =>
-          prev.map((u) => (u._id === userId ? { ...u, groupId } : u)),
-        );
-      } else {
+      if (!data.success) {
         toast.error(data.error);
+        return;
       }
 
-      setLoadingUserId(null);
-    },
-    [userMap],
-  );
+      // 🔥 Optimized optimistic update (only if needed)
+      setUsers((prev) =>
+        prev.map((u) =>
+          u._id === userId && u.groupId !== groupId
+            ? { ...u, groupId }
+            : u
+        )
+      );
 
+      toast.success("Group assigned");
+    } catch (err) {
+      console.error(err);
+      toast.error("Something went wrong");
+    } finally {
+      setLoadingUserId(null);
+    }
+  },
+  [userMap]
+);
+  
   const roomOptions = useMemo(
     () =>
       Object.entries(rooms).map(([id, name]) => (
@@ -364,37 +458,73 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
     [groups],
   );
 
-  const processedUsers = useMemo(() => {
-    const q = debouncedSearch.toLowerCase();
+  // const processedUsers = useMemo(() => {
+  //   const q = debouncedSearch.toLowerCase();
 
-    let result = users.filter(
+  //   let result = users.filter(
+  //     (u) =>
+  //       u.name?.toLowerCase().includes(q) ||
+  //       u.churchName?.toLowerCase().includes(q) ||
+  //       u.age?.toString().includes(q),
+  //   );
+
+  //   switch (mode) {
+  //     case "name":
+  //       result.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+  //       return result;
+  //     case "age":
+  //       result.sort((a, b) => (a.age || 0) - (b.age || 0));
+  //       return result;
+  //     case "assigned-any":
+  //       return result.filter((u) => u.roomId || u.groupId);
+  //     case "assigned-both":
+  //       return result.filter((u) => u.roomId && u.groupId);
+  //     case "unassigned":
+  //       return result.filter((u) => !u.roomId && !u.groupId);
+  //     case "male":
+  //       return result.filter((u) => u.gender?.toLowerCase() === "male");
+  //     case "female":
+  //       return result.filter((u) => u.gender?.toLowerCase() === "female");
+  //     default:
+  //       return result;
+  //   }
+  // }, [users, debouncedSearch, mode]);
+
+  const processedUsers = useMemo(() => {
+  const q = debouncedSearch.trim().toLowerCase();
+
+  let result = users;
+
+  if (q) {
+    result = users.filter(
       (u) =>
         u.name?.toLowerCase().includes(q) ||
         u.churchName?.toLowerCase().includes(q) ||
         u.age?.toString().includes(q),
     );
+  }
 
-    switch (mode) {
-      case "name":
-        result.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
-        return result;
-      case "age":
-        result.sort((a, b) => (a.age || 0) - (b.age || 0));
-        return result;
-      case "assigned-any":
-        return result.filter((u) => u.roomId || u.groupId);
-      case "assigned-both":
-        return result.filter((u) => u.roomId && u.groupId);
-      case "unassigned":
-        return result.filter((u) => !u.roomId && !u.groupId);
-      case "male":
-        return result.filter((u) => u.gender?.toLowerCase() === "male");
-      case "female":
-        return result.filter((u) => u.gender?.toLowerCase() === "female");
-      default:
-        return result;
-    }
-  }, [users, debouncedSearch, mode]);
+  switch (mode) {
+    case "name":
+      return [...result].sort((a, b) =>
+        (a.name || "").localeCompare(b.name || "")
+      );
+    case "age":
+      return [...result].sort((a, b) => (a.age || 0) - (b.age || 0));
+    case "assigned-any":
+      return result.filter((u) => u.roomId || u.groupId);
+    case "assigned-both":
+      return result.filter((u) => u.roomId && u.groupId);
+    case "unassigned":
+      return result.filter((u) => !u.roomId && !u.groupId);
+    case "male":
+      return result.filter((u) => u.gender?.toLowerCase() === "male");
+    case "female":
+      return result.filter((u) => u.gender?.toLowerCase() === "female");
+    default:
+      return result;
+  }
+}, [users, debouncedSearch, mode]);
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 p-10">

@@ -58,13 +58,13 @@ export default async function RoomsPage() {
       
       <h2 className="text-3xl font-semibold mb-8 mt-10">Rooms</h2>
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {rooms.map((room) => (
+        {rooms && rooms.length > 0 ? rooms.map((room) => (
           <RoomCard 
             key={room._id} 
             room={room} 
             users={users} // Pass the typed users array
           />
-        ))}
+        )) : <p className="text-zinc-500 italic">No rooms found.</p>}
       </div>
       <RefreshHandler />
     </div>
