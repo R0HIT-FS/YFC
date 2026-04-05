@@ -173,6 +173,7 @@
 import React from "react";
 import { useState, useEffect } from "react";
 import { RoomHover } from "./RoomHover";
+import { useRouter } from "next/navigation";
 import {
   AlertDialog,
   AlertDialogTrigger,
@@ -207,6 +208,8 @@ interface RoomCardProps {
 
 function RoomCard({ room, users: initialUsers }: RoomCardProps) {
   const [localUsers, setLocalUsers] = useState<User[]>(initialUsers);
+
+  const router = useRouter();
 
   // 🔥 Sync ONLY when needed
   useEffect(() => {
@@ -262,6 +265,7 @@ function RoomCard({ room, users: initialUsers }: RoomCardProps) {
       }
 
       toast.success("Room Deleted", { position: "bottom-right" });
+      router.refresh();
     } catch {
       toast.error("An error occurred while deleting the room");
     }

@@ -559,7 +559,7 @@ useEffect(() => {
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {processedUsers.map((user) => (
+        {processedUsers && processedUsers.length > 0 ? processedUsers.map((user) => (
           <UserCard
             key={user._id}
             user={user}
@@ -571,7 +571,7 @@ useEffect(() => {
             assignGroup={assignGroup}
             loadingUserId={loadingUserId}
           />
-        ))}
+        )) :  <p className="text-zinc-500 italic">No delegates found.</p>}
       </div>
       <RefreshHandler />
     </div>
