@@ -23,6 +23,7 @@ export async function POST(req) {
     const roomObjectId = new ObjectId(roomId);
 
     await session.withTransaction(async () => {
+      // ✅ Get room
       const room = await rooms.findOne(
         { _id: roomObjectId },
         { session }
@@ -30,20 +31,17 @@ export async function POST(req) {
 
       if (!room) throw new Error("Room not found");
 
-      if ((room.currentCount || 0) >= room.limit) {
-        throw new Error("Room is full");
-      }
-
-      const user = await users.findOne(
-        { _id: userObjectId },
+      // 🔥 Source of truth: actual count
+      const count = await users.countDocuments(
+        { roomId: roomObjectId },
         { session }
       );
 
-      if (!user) throw new Error("User not found");
+      if (count >= room.limit) {
+        throw new Error("Room is full");
+      }
 
-      const prevRoomId = user.roomId;
-
-      // ✅ Update user + timestamp
+      // ✅ Update user
       await users.updateOne(
         { _id: userObjectId },
         {
@@ -54,22 +52,6 @@ export async function POST(req) {
         },
         { session }
       );
-
-      // ✅ Increment new room
-      await rooms.updateOne(
-        { _id: roomObjectId },
-        { $inc: { currentCount: 1 } },
-        { session }
-      );
-
-      // ✅ Decrement previous room
-      if (prevRoomId) {
-        await rooms.updateOne(
-          { _id: prevRoomId },
-          { $inc: { currentCount: -1 } },
-          { session }
-        );
-      }
     });
 
     return Response.json({ success: true });

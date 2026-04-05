@@ -5,44 +5,15 @@ export async function POST(req) {
   try {
     const { userId, groupId } = await req.json();
 
-    if (!userId || !groupId) {
-      return Response.json({
-        success: false,
-        error: "Missing userId or groupId",
-      });
-    }
-
     const client = await clientPromise;
     const db = client.db("yfc");
 
-    const users = db.collection("users");
-    const groups = db.collection("groups");
-
-    const userObjectId = new ObjectId(userId);
-    const groupObjectId = new ObjectId(groupId);
-
-    const group = await groups.findOne({ _id: groupObjectId });
-    if (!group) {
-      return Response.json({
-        success: false,
-        error: "Group not found",
-      });
-    }
-
-    const user = await users.findOne({ _id: userObjectId });
-    if (!user) {
-      return Response.json({
-        success: false,
-        error: "User not found",
-      });
-    }
-
-    await users.updateOne(
-      { _id: userObjectId },
+    await db.collection("users").updateOne(
+      { _id: new ObjectId(userId) },
       {
         $set: {
-          groupId: groupObjectId,
-          updatedAt: new Date(), // 🔥 important
+          groupId: new ObjectId(groupId),
+          updatedAt: new Date(),
         },
       }
     );
