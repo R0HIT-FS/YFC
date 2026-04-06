@@ -197,6 +197,7 @@ import {
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 import React from "react";
+import { useRouter } from "next/navigation";
 
 interface User {
   _id: string;
@@ -217,7 +218,7 @@ interface GroupCardProps {
 
 function GroupCard({ group, users: initialUsers }: GroupCardProps) {
   const [localUsers, setLocalUsers] = useState<User[]>(initialUsers || []);
-
+  const router = useRouter();
   // 🔥 Sync only when needed
   useEffect(() => {
     if (initialUsers !== localUsers) {
@@ -234,6 +235,7 @@ function GroupCard({ group, users: initialUsers }: GroupCardProps) {
 
     setLocalUsers((curr) => curr.filter((u) => u._id !== userId));
     toast.success("Member removed", { position: "bottom-right" });
+    router.refresh();
 
     try {
       const res = await fetch("/api/remove-from-group", {
@@ -272,6 +274,7 @@ function GroupCard({ group, users: initialUsers }: GroupCardProps) {
       }
 
       toast.success("Group Deleted", { position: "bottom-right" });
+      router.refresh();
     } catch {
       toast.error("Failed to delete group");
     }

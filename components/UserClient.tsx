@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 import {
   Dialog,
@@ -205,6 +206,8 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
   const [mode, setMode] = useState("name");
   const [lastSync, setLastSync] = useState(new Date().toISOString());
 
+  const router = useRouter();
+
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(search), 300);
     return () => clearTimeout(t);
@@ -251,30 +254,6 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
         const data = await res.json();
 
         if (!data.success || !data.users.length) return;
-
-        // setUsers((prev) => {
-        //   let changed = false;
-        //   const map = new Map(prev.map((u) => [u._id, u]));
-
-        //   data.users.forEach((updated: any) => {
-        //     const existing = map.get(updated._id);
-
-        //     // 🔥 ONLY update if actually changed
-        //     if (
-        //       existing &&
-        //       (existing.roomId !== updated.roomId ||
-        //         existing.groupId !== updated.groupId)
-        //     ) {
-        //       map.set(updated._id, {
-        //         ...existing,
-        //         ...updated,
-        //       });
-        //       changed = true;
-        //     }
-        //   });
-
-        //   return changed ? Array.from(map.values()) : prev;
-        // });
 
         setUsers((prev) => {
           const map = new Map(prev.map((u) => [u._id, u]));
@@ -368,6 +347,7 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
         );
 
         toast.success("Room assigned");
+        router.refresh();
       } catch {
         toast.error("Something went wrong");
       } finally {
@@ -437,6 +417,7 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
         );
 
         toast.success("Group assigned");
+        router.refresh()
       } catch (err) {
         console.error(err);
         toast.error("Something went wrong");
