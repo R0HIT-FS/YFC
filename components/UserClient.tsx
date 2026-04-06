@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { Slider } from "@/components/ui/slider";
 
 import {
   Dialog,
@@ -205,6 +206,7 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [mode, setMode] = useState("name");
   const [lastSync, setLastSync] = useState(new Date().toISOString());
+  const [ageRange, setAgeRange] = useState<[number, number]>([0, 100]);
 
   const router = useRouter();
 
@@ -417,7 +419,7 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
         );
 
         toast.success("Group assigned");
-        router.refresh()
+        router.refresh();
       } catch (err) {
         console.error(err);
         toast.error("Something went wrong");
@@ -511,10 +513,14 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
         return result.filter((u) => u.gender?.toLowerCase() === "male");
       case "female":
         return result.filter((u) => u.gender?.toLowerCase() === "female");
+      case "age-range":
+        return result.filter(
+          (u) => u.age !== null && u.age >= ageRange[0] && u.age <= ageRange[1],
+        );
       default:
         return result;
     }
-  }, [users, debouncedSearch, mode]);
+  }, [users, debouncedSearch, mode, ageRange]);
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 p-10">
@@ -545,7 +551,71 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
           <option value="unassigned">Filter : Unassigned</option>
           <option value="male">Filter : Male</option>
           <option value="female">Filter : Female</option>
+          <option value="age-range">Filter : Age Range</option>
         </select>
+
+{mode === "age-range" && (
+  <div className="w-full md:w-[200px] md:max-w-lg rounded-xl border border-zinc-800 bg-zinc-900 p-3">
+    {/* Header */}
+    <div className="flex items-center justify-between mb-2 gap-8">
+      <p className="text-xs text-zinc-400 mb-2">Age Range</p>
+      <span className="text-xs text-zinc-200 mb-2">
+        {ageRange[0]} - {ageRange[1]}
+      </span>
+    </div>
+
+    {/* Slim Slider */}
+    {/* <Slider
+      value={ageRange}
+      min={0}
+      max={100}
+      step={1}
+      onValueChange={(value) => setAgeRange(value as [number, number])}
+      className="
+        [&_[data-orientation=horizontal]]:h-1
+        [&_[data-orientation=horizontal]]:bg-zinc-700
+
+        [&_[data-slot=track]]:bg-zinc-700
+        [&_[data-slot=range]]:bg-white
+
+        [&_[role=slider]]:h-3
+        [&_[role=slider]]:w-3
+        [&_[role=slider]]:bg-white
+        [&_[role=slider]]:border border-white
+        [&_[role=slider]]:shadow-sm
+      "
+    /> */}
+
+<Slider
+  value={ageRange}
+  min={0}
+  max={100}
+  step={1}
+  onValueChange={(value) => setAgeRange(value as [number, number])}
+  className="
+    w-full
+
+    /* Track (full line) */
+    [&>.relative]:h-1
+    [&>.relative]:bg-zinc-700
+    [&>.relative]:rounded-full
+
+    /* Range (active part) */
+    [&>.relative>span]:bg-white
+    [&>.relative>span]:rounded-full
+
+    /* Thumb */
+    [&_[role=slider]]:h-3
+    [&_[role=slider]]:w-3
+    [&_[role=slider]]:bg-white
+    [&_[role=slider]]:border
+    [&_[role=slider]]:border-zinc-900
+    [&_[role=slider]]:rounded-full
+    [&_[role=slider]]:shadow-sm
+  "
+/>
+  </div>
+)}
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
