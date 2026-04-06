@@ -35,7 +35,7 @@
 
 // export default function GroupCard({ group, users: initialUsers }: GroupCardProps) {
 //   const router = useRouter();
-  
+
 //   // Initialize state with a fallback empty array
 //   const [localUsers, setLocalUsers] = useState<User[]>(initialUsers || []);
 
@@ -44,7 +44,7 @@
 //   }, [initialUsers]);
 
 //   /**
-//    * PERFORMANCE: useMemo prevents re-filtering the entire user list 
+//    * PERFORMANCE: useMemo prevents re-filtering the entire user list
 //    * unless localUsers or the group ID actually changes.
 //    */
 //   const groupUsers = useMemo(() => {
@@ -52,7 +52,7 @@
 //   }, [localUsers, group._id]);
 
 //   /**
-//    * PERFORMANCE: useCallback memoizes the function reference, 
+//    * PERFORMANCE: useCallback memoizes the function reference,
 //    * preventing child component re-renders if this were passed down.
 //    */
 //   const removeUser = useCallback(async (userId: string) => {
@@ -72,7 +72,7 @@
 //       const data = await res.json();
 //       if (!data.success) throw new Error(data.error);
 
-//       router.refresh(); 
+//       router.refresh();
 //     } catch (err: any) {
 //       setLocalUsers(originalUsers);
 //       toast.error(err.message || "Failed to sync with server");
@@ -105,13 +105,13 @@
 //       <h2 className="text-lg font-semibold mb-3 text-zinc-100">
 //         Group: {group?.name ?? "Unnamed"}
 //       </h2>
-      
+
 //       <div className="space-y-2">
 //         {groupUsers.length > 0 ? (
 //           groupUsers.map((user) => (
 //             <div key={user._id} className="flex items-center justify-between bg-zinc-800 px-3 py-2 rounded-md">
 //               <span className="text-sm text-zinc-300">{user?.name ?? "Anonymous"}</span>
-              
+
 //               <AlertDialog>
 //                 <AlertDialogTrigger asChild>
 //                   <button className="text-xs text-red-400 hover:text-red-300 cursor-pointer">
@@ -129,8 +129,8 @@
 //                     <AlertDialogCancel className="bg-zinc-800 border-zinc-700 text-zinc-300">
 //                       Cancel
 //                     </AlertDialogCancel>
-//                     <AlertDialogAction 
-//                       className="bg-red-600 hover:bg-red-700 text-white" 
+//                     <AlertDialogAction
+//                       className="bg-red-600 hover:bg-red-700 text-white"
 //                       onClick={() => removeUser(user._id)}
 //                     >
 //                       Remove
@@ -165,8 +165,8 @@
 //                 <AlertDialogCancel className="bg-zinc-800 border-zinc-700 text-zinc-300">
 //                   Cancel
 //                 </AlertDialogCancel>
-//                 <AlertDialogAction 
-//                   className="bg-red-600 hover:bg-red-700 text-white" 
+//                 <AlertDialogAction
+//                   className="bg-red-600 hover:bg-red-700 text-white"
 //                   onClick={deleteGroup}
 //                 >
 //                   Delete Group
@@ -179,7 +179,6 @@
 //     </div>
 //   );
 // }
-
 
 "use client";
 
@@ -234,8 +233,6 @@ function GroupCard({ group, users: initialUsers }: GroupCardProps) {
     const prev = localUsers;
 
     setLocalUsers((curr) => curr.filter((u) => u._id !== userId));
-    toast.success("Member removed", { position: "bottom-right" });
-    router.refresh();
 
     try {
       const res = await fetch("/api/remove-from-group", {
@@ -248,7 +245,12 @@ function GroupCard({ group, users: initialUsers }: GroupCardProps) {
 
       const data = await res.json();
 
-      if (!data.success) throw new Error(data.error);
+      if (!data.success) {
+        toast.error(data.error || "Failed to remove user");
+        return;
+      }
+      toast.success("Member removed", { position: "bottom-right" });
+    router.refresh();
     } catch (err: any) {
       setLocalUsers(prev);
       toast.error(err.message || "Failed to sync with server");
@@ -308,7 +310,8 @@ function GroupCard({ group, users: initialUsers }: GroupCardProps) {
                   <AlertDialogHeader>
                     <AlertDialogTitle>Remove User</AlertDialogTitle>
                     <AlertDialogDescription className="text-zinc-400">
-                      Are you sure you want to remove {user?.name ?? "this user"}?
+                      Are you sure you want to remove{" "}
+                      {user?.name ?? "this user"}?
                     </AlertDialogDescription>
                   </AlertDialogHeader>
 
@@ -354,7 +357,8 @@ function GroupCard({ group, users: initialUsers }: GroupCardProps) {
                   This action cannot be undone. This will permanently delete{" "}
                   <span className="text-zinc-200 font-medium">
                     {group?.name ?? "this group"}
-                  </span>.
+                  </span>
+                  .
                 </AlertDialogDescription>
               </AlertDialogHeader>
 
