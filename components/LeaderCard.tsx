@@ -54,7 +54,7 @@ export default function LeaderCard({
 const [isOpen, setIsOpen] = React.useState(false);
 
   return (
-    <div className="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-5">
+    <div className="w-full bg-zinc-900 border border-zinc-800 rounded-xl py-3 px-5">
       {/* Group Title */}
       {/* <h3 className="text-lg font-semibold mb-4">
         {group.name || "Unnamed Group"}
