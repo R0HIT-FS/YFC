@@ -16,6 +16,15 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuCheckboxItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+
 import { Button } from "@/components/ui/button";
 import { Maximize2 } from "lucide-react";
 import React from "react";
@@ -207,6 +216,13 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
   const [mode, setMode] = useState("name");
   const [lastSync, setLastSync] = useState(new Date().toISOString());
   const [ageRange, setAgeRange] = useState<[number, number]>([0, 100]);
+  const [modes, setModes] = useState<string[]>([]);
+
+  const toggleMode = (mode: string) => {
+    setModes((prev) =>
+      prev.includes(mode) ? prev.filter((m) => m !== mode) : [...prev, mode],
+    );
+  };
 
   const router = useRouter();
 
@@ -482,13 +498,58 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
   //   }
   // }, [users, debouncedSearch, mode]);
 
+  // const processedUsers = useMemo(() => {
+  //   const q = debouncedSearch.trim().toLowerCase();
+
+  //   let result = users;
+
+  //   if (q) {
+  //     result = users.filter(
+  //       (u) =>
+  //         u.name?.toLowerCase().includes(q) ||
+  //         u.churchName?.toLowerCase().includes(q) ||
+  //         u.age?.toString().includes(q),
+  //     );
+  //   }
+
+  //   switch (mode) {
+  //     case "name":
+  //       return [...result].sort((a, b) =>
+  //         (a.name || "").localeCompare(b.name || ""),
+  //       );
+  //     case "age":
+  //       return [...result].sort((a, b) => (a.age || 0) - (b.age || 0));
+  //     // case "assigned-any":
+  //     //   return result.filter((u) => u.roomId || u.groupId);
+  //     case "unassigned-group":
+  //       return result.filter((u) =>  !u.groupId);
+  //     case "unassigned-room":
+  //       return result.filter((u) => !u.roomId);
+  //     case "assigned-both":
+  //       return result.filter((u) => u.roomId && u.groupId);
+  //     case "unassigned":
+  //       return result.filter((u) => !u.roomId && !u.groupId);
+  //     case "male":
+  //       return result.filter((u) => u.gender?.toLowerCase() === "male");
+  //     case "female":
+  //       return result.filter((u) => u.gender?.toLowerCase() === "female");
+  //     case "age-range":
+  //       return result.filter(
+  //         (u) => u.age !== null && u.age >= ageRange[0] && u.age <= ageRange[1],
+  //       );
+  //     default:
+  //       return result;
+  //   }
+  // }, [users, debouncedSearch, mode, ageRange]);
+
   const processedUsers = useMemo(() => {
     const q = debouncedSearch.trim().toLowerCase();
 
     let result = users;
 
+    // 🔍 search
     if (q) {
-      result = users.filter(
+      result = result.filter(
         (u) =>
           u.name?.toLowerCase().includes(q) ||
           u.churchName?.toLowerCase().includes(q) ||
@@ -496,32 +557,40 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
       );
     }
 
-    switch (mode) {
-      case "name":
-        return [...result].sort((a, b) =>
-          (a.name || "").localeCompare(b.name || ""),
-        );
-      case "age":
-        return [...result].sort((a, b) => (a.age || 0) - (b.age || 0));
-      case "assigned-any":
-        return result.filter((u) => u.roomId || u.groupId);
-      case "assigned-both":
-        return result.filter((u) => u.roomId && u.groupId);
-      case "unassigned":
-        return result.filter((u) => !u.roomId && !u.groupId);
-      case "male":
-        return result.filter((u) => u.gender?.toLowerCase() === "male");
-      case "female":
-        return result.filter((u) => u.gender?.toLowerCase() === "female");
-      case "age-range":
-        return result.filter(
-          (u) => u.age !== null && u.age >= ageRange[0] && u.age <= ageRange[1],
-        );
-      default:
-        return result;
+    // 🔥 apply ALL selected filters
+    if (modes.length > 0) {
+      result = result.filter((u) => {
+        return modes.every((mode) => {
+          switch (mode) {
+            case "unassigned-group":
+              return !u.groupId;
+            case "unassigned-room":
+              return !u.roomId;
+            case "assigned-both":
+              return u.roomId && u.groupId;
+            case "unassigned":
+              return !u.roomId && !u.groupId;
+            case "male":
+              return u.gender?.toLowerCase() === "male";
+            case "female":
+              return u.gender?.toLowerCase() === "female";
+            case "age-range":
+              return (
+                u.age !== null && u.age >= ageRange[0] && u.age <= ageRange[1]
+              );
+            default:
+              return true;
+          }
+        });
+      });
     }
-  }, [users, debouncedSearch, mode, ageRange]);
 
+    if (modes.includes("age")) {
+  result = [...result].sort((a, b) => (a.age || 0) - (b.age || 0));
+}
+
+    return result;
+  }, [users, debouncedSearch, modes, ageRange]);
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 p-10">
       <h1 className="text-3xl font-semibold mb-6">Delegates</h1>
@@ -539,38 +608,107 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
           className="w-full md:w-max bg-zinc-900 border border-zinc-800 px-3 py-2 rounded-md w-full max-w-md focus:outline-none"
         />
 
-        <select
-          value={mode}
-          onChange={(e) => setMode(e.target.value)}
-          className="bg-zinc-900 border border-zinc-800 px-3 py-2 rounded-md focus:outline-none"
-        >
-          <option value="name">Sort By : Name (A-Z)</option>
-          <option value="age">Sort By : Age</option>
-          <option value="assigned-any">Filter : Assigned Any</option>
-          <option value="assigned-both">Filter : Assigned Both</option>
-          <option value="unassigned">Filter : Unassigned</option>
-          <option value="male">Filter : Male</option>
-          <option value="female">Filter : Female</option>
-          <option value="age-range">Filter : Age Range</option>
-        </select>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="text-[16px] bg-zinc-900 border border-zinc-800 px-3 py-2 rounded-md text-sm hover:bg-zinc-800">
+              Filters {modes.length > 0 && `(${modes.length})`}
+            </button>
+          </DropdownMenuTrigger>
 
-{mode === "age-range" && (
-  <div className="w-full md:w-[200px] md:max-w-lg rounded-xl border border-zinc-800 bg-zinc-900 p-3">
-    {/* Header */}
-    <div className="flex items-center justify-between mb-2 gap-8">
-      <p className="text-xs text-zinc-400 mb-2">Age Range</p>
-      <span className="text-xs text-zinc-200 mb-2">
-        {ageRange[0]} - {ageRange[1]}
-      </span>
-    </div>
+          <DropdownMenuContent
+            align="start"
+            className="w-56 bg-zinc-900 border border-zinc-800 text-zinc-100"
+          >
+            <DropdownMenuLabel>Filter Users</DropdownMenuLabel>
+            <DropdownMenuSeparator color="white" />
 
-<Slider
-  value={ageRange}
-  min={0}
-  max={100}
-  step={1}
-  onValueChange={(value) => setAgeRange(value as [number, number])}
-  className="
+            <DropdownMenuCheckboxItem className="cursor-pointer hover:bg-zinc-800 data-[state=checked]:bg-zinc-800
+    data-[state=checked]:text-white"
+              checked={modes.includes("age")}
+              onCheckedChange={() => toggleMode("age")}
+            >
+              Age
+            </DropdownMenuCheckboxItem>
+
+            <DropdownMenuCheckboxItem className="cursor-pointer hover:bg-zinc-800 data-[state=checked]:bg-zinc-800
+    data-[state=checked]:text-white"
+              checked={modes.includes("unassigned-group")}
+              onCheckedChange={() => toggleMode("unassigned-group")}
+            >
+              Unassigned Group
+            </DropdownMenuCheckboxItem>
+
+            <DropdownMenuCheckboxItem className="cursor-pointer hover:bg-zinc-800 data-[state=checked]:bg-zinc-800
+    data-[state=checked]:text-white"
+              checked={modes.includes("unassigned-room")}
+              onCheckedChange={() => toggleMode("unassigned-room")}
+            >
+              Unassigned Room
+            </DropdownMenuCheckboxItem>
+
+            <DropdownMenuCheckboxItem className="cursor-pointer hover:bg-zinc-800 data-[state=checked]:bg-zinc-800
+    data-[state=checked]:text-white"
+              checked={modes.includes("assigned-both")}
+              onCheckedChange={() => toggleMode("assigned-both")}
+            >
+              Assigned Both
+            </DropdownMenuCheckboxItem>
+
+            <DropdownMenuCheckboxItem className="cursor-pointer hover:bg-zinc-800 data-[state=checked]:bg-zinc-800
+    data-[state=checked]:text-white"
+              checked={modes.includes("unassigned")}
+              onCheckedChange={() => toggleMode("unassigned")}
+            >
+              Unassigned
+            </DropdownMenuCheckboxItem>
+
+            <DropdownMenuSeparator />
+
+            <DropdownMenuCheckboxItem className="cursor-pointer hover:bg-zinc-800 data-[state=checked]:bg-zinc-800
+    data-[state=checked]:text-white"
+              checked={modes.includes("male")}
+              onCheckedChange={() => toggleMode("male")}
+            >
+              Male
+            </DropdownMenuCheckboxItem>
+
+            <DropdownMenuCheckboxItem className="cursor-pointer hover:bg-zinc-800 data-[state=checked]:bg-zinc-800
+    data-[state=checked]:text-white"
+              checked={modes.includes("female")}
+              onCheckedChange={() => toggleMode("female")}
+            >
+              Female
+            </DropdownMenuCheckboxItem>
+
+            <DropdownMenuSeparator />
+
+            <DropdownMenuCheckboxItem className="cursor-pointer hover:bg-zinc-800 data-[state=checked]:bg-zinc-800
+    data-[state=checked]:text-white"
+              checked={modes.includes("age-range")}
+              onCheckedChange={() => toggleMode("age-range")}
+            >
+              Age Range
+            </DropdownMenuCheckboxItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        {modes.includes("age-range") && (
+          <div className="w-full md:w-[200px] md:max-w-lg rounded-xl border border-zinc-800 bg-zinc-900 p-3">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-2 gap-8">
+              <p className="text-xs text-zinc-400 mb-2">Age Range</p>
+              <span className="text-xs text-zinc-200 mb-2">
+                {ageRange[0]} - {ageRange[1]}
+              </span>
+            </div>
+
+            <Slider
+              value={ageRange}
+              min={0}
+              max={100}
+              step={1}
+              onValueChange={(value) => setAgeRange(value as [number, number])}
+              className="
     w-full
 
     /* Track (full line) */
@@ -591,9 +729,9 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
     [&_[role=slider]]:rounded-full
     [&_[role=slider]]:shadow-sm
   "
-/>
-  </div>
-)}
+            />
+          </div>
+        )}
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
