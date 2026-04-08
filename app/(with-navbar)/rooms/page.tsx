@@ -76,7 +76,7 @@
 export const dynamic = "force-dynamic";
 
 import CreateRoom from "@/components/CreateRoom";
-import clientPromise from "../lib/db";
+import clientPromise from "../../lib/db";
 import RoomCard from "@/components/RoomCard";
 import RefreshHandler from "@/components/RefreshHandler";
 

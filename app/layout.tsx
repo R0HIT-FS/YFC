@@ -31,7 +31,6 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className={`${geistSans.variable} ${geistMono.variable} min-h-full flex flex-col bg-black`} suppressHydrationWarning>
-      <Navbar/>
         {children}
       <Toaster/>
       </body>

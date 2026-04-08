@@ -1,4 +1,4 @@
-import UsersClient from "../components/UserClient";
+import UsersClient from "../../components/UserClient";
 async function getUsers() {
   const res = await fetch(`${process.env.NEXT_PUBLIC_URL}/api/users`, {
     cache: "no-store",

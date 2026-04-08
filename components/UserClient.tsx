@@ -564,28 +564,6 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
       </span>
     </div>
 
-    {/* Slim Slider */}
-    {/* <Slider
-      value={ageRange}
-      min={0}
-      max={100}
-      step={1}
-      onValueChange={(value) => setAgeRange(value as [number, number])}
-      className="
-        [&_[data-orientation=horizontal]]:h-1
-        [&_[data-orientation=horizontal]]:bg-zinc-700
-
-        [&_[data-slot=track]]:bg-zinc-700
-        [&_[data-slot=range]]:bg-white
-
-        [&_[role=slider]]:h-3
-        [&_[role=slider]]:w-3
-        [&_[role=slider]]:bg-white
-        [&_[role=slider]]:border border-white
-        [&_[role=slider]]:shadow-sm
-      "
-    /> */}
-
 <Slider
   value={ageRange}
   min={0}

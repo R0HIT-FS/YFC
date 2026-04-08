@@ -71,8 +71,8 @@
 
 export const dynamic = "force-dynamic";
 
-import clientPromise from "../lib/db";
-import GroupCard from "../../components/GroupCard";
+import clientPromise from "../../lib/db";
+import GroupCard from "../../../components/GroupCard";
 import CreateGroup from "@/components/CreateGroup";
 import RefreshHandler from "@/components/RefreshHandler";
 

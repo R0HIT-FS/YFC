@@ -1,5 +1,5 @@
 import React from 'react'
-import SyncButton from '../../components/SyncButton'
+import SyncButton from '../../../components/SyncButton'
 
 export const metadata = {
   title: "Sync - Saviour Of Sinners",
