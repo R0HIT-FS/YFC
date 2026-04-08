@@ -12,6 +12,7 @@ interface User {
   email?: string | null;
   age?: number | null;
   gender?: string | null;
+  phone? : string | number | null | undefined;
   churchName?: string | null;
   groupId?: string | null;
   roomId?: string | null;
@@ -61,7 +62,7 @@ async function getData() {
         // email: u.email ?? "",
         age: u.age ?? null,
         gender: u.gender ?? "",
-        // churchName: u.churchName ?? "",
+        phone: u.phone ?? "",
         groupId,
         roomId: u.roomId ? u.roomId.toString() : null,
       });

@@ -36,9 +36,11 @@ interface User {
   age: number | null;
   email: string;
   gender: string;
+  phone?: string | number;
   churchName: string;
   roomId: string | null;
   groupId: string | null;
+  reportedToVenue?: boolean;
 }
 
 interface UserCardProps {
@@ -50,6 +52,7 @@ interface UserCardProps {
   assignRoom: (userId: string, roomId: string) => Promise<void>;
   assignGroup: (userId: string, groupId: string) => Promise<void>;
   loadingUserId: string | null;
+  toggleReported: (userId: string, reported: boolean) => void;
 }
 
 interface UsersClientProps {
@@ -66,6 +69,7 @@ const UserCard = React.memo(function UserCard({
   assignRoom,
   assignGroup,
   loadingUserId,
+  toggleReported,
 }: UserCardProps) {
   return (
     <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 relative">
@@ -92,7 +96,13 @@ const UserCard = React.memo(function UserCard({
         </p>
       )}
 
-      <Dialog>
+      {user.reportedToVenue && (
+        <p className="text-xs mt-2 text-zinc-400">
+          <b>Reported To Venue:</b> Yes
+        </p>
+      )}
+
+      {/* <Dialog>
         <DialogTrigger asChild>
           <button className="mt-4 w-full bg-zinc-800 hover:bg-zinc-700 text-sm py-2 rounded-md">
             Assign Room / Group
@@ -128,6 +138,64 @@ const UserCard = React.memo(function UserCard({
             </button>
           </DialogClose>
         </DialogContent>
+      </Dialog> */}
+
+      <Dialog>
+        <DialogTrigger asChild>
+          <button className="mt-4 w-full bg-zinc-800 hover:bg-zinc-700 text-sm py-2 rounded-md">
+            Assign Room / Group
+          </button>
+        </DialogTrigger>
+
+        <DialogContent className="bg-zinc-900 border border-zinc-800 text-zinc-100">
+          <DialogHeader>
+            <DialogTitle>Assign for {user.name}</DialogTitle>
+          </DialogHeader>
+
+          {/* Room */}
+          <p>Room :</p>
+          <select
+            value={user.roomId || ""}
+            onChange={(e) => assignRoom(user._id, e.target.value)}
+            className="mt-0 w-full bg-zinc-950 border border-zinc-800 text-zinc-200 rounded-md px-3 py-2 text-sm"
+          >
+            <option value="">Select Room</option>
+            {roomOptions}
+          </select>
+
+          {/* Group */}
+          <p>Group :</p>
+          <select
+            value={user.groupId || ""}
+            onChange={(e) => assignGroup(user._id, e.target.value)}
+            className="mt-0 w-full bg-zinc-950 border border-zinc-800 text-zinc-200 rounded-md px-3 py-2 text-sm"
+          >
+            <option value="">Select Group</option>
+            {groupOptions}
+          </select>
+
+          {/* ✅ Report Toggle */}
+          <div className="mt-4 flex items-center justify-between border border-zinc-800 rounded-md px-3 py-2">
+            <span className="text-sm text-zinc-300">Reported to Venue</span>
+
+            <button
+              onClick={() => toggleReported(user._id, !user.reportedToVenue)}
+              className={`px-3 py-1 rounded-md text-xs transition ${
+                user.reportedToVenue
+                  ? "bg-green-700 hover:bg-green-600 text-white"
+                  : "bg-zinc-800 hover:bg-zinc-700 text-zinc-300"
+              }`}
+            >
+              {user.reportedToVenue ? "Reported" : "Mark"}
+            </button>
+          </div>
+
+          <DialogClose asChild>
+            <button className="mt-4 bg-zinc-800 px-4 py-2 rounded-md text-sm">
+              Close
+            </button>
+          </DialogClose>
+        </DialogContent>
       </Dialog>
 
       {loadingUserId === user._id && (
@@ -159,6 +227,7 @@ const UserCard = React.memo(function UserCard({
                   { label: "Email", value: user.email },
                   { label: "Age", value: user.age },
                   { label: "Gender", value: user.gender },
+                  { label: "Phone", value: user.phone },
                   { label: "Church", value: user.churchName },
                 ].map(({ label, value }) => (
                   <div
@@ -466,6 +535,40 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
     [groups],
   );
 
+  const toggleReported = useCallback(
+    async (userId: string, reported: boolean) => {
+      try {
+        const res = await fetch("/api/report-to-venue", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ userId, reported }),
+        });
+
+        const data = await res.json();
+
+        if (!data.success) {
+          toast.error(data.error);
+          return;
+        }
+
+        // 🔥 optimistic UI update
+        setUsers((prev) =>
+          prev.map((u) =>
+            u._id === userId ? { ...u, reportedToVenue: reported } : u,
+          ),
+        );
+
+        toast.success(reported ? "Marked as reported" : "Unmarked");
+      } catch (err) {
+        console.error(err);
+        toast.error("Failed");
+      }
+    },
+    [],
+  );
+
   // const processedUsers = useMemo(() => {
   //   const q = debouncedSearch.toLowerCase();
 
@@ -574,6 +677,10 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
               return u.gender?.toLowerCase() === "male";
             case "female":
               return u.gender?.toLowerCase() === "female";
+            case "reported":
+              return u.reportedToVenue === true;
+            case "not-reported":
+              return !u.reportedToVenue;
             case "age-range":
               return (
                 u.age !== null && u.age >= ageRange[0] && u.age <= ageRange[1]
@@ -586,8 +693,8 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
     }
 
     if (modes.includes("age")) {
-  result = [...result].sort((a, b) => (a.age || 0) - (b.age || 0));
-}
+      result = [...result].sort((a, b) => (a.age || 0) - (b.age || 0));
+    }
 
     return result;
   }, [users, debouncedSearch, modes, ageRange]);
@@ -620,17 +727,31 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
             className="w-56 bg-zinc-900 border border-zinc-800 text-zinc-100"
           >
             <DropdownMenuLabel>Filter Users</DropdownMenuLabel>
-            <DropdownMenuSeparator color="white" />
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel className="bg-zinc-700 rounded-lg">Age</DropdownMenuLabel>
 
-            <DropdownMenuCheckboxItem className="cursor-pointer hover:bg-zinc-800 data-[state=checked]:bg-zinc-800
+            <DropdownMenuCheckboxItem
+              className="cursor-pointer hover:bg-zinc-800 data-[state=checked]:bg-zinc-800
     data-[state=checked]:text-white"
               checked={modes.includes("age")}
               onCheckedChange={() => toggleMode("age")}
             >
-              Age
+              Age (Ascending)
             </DropdownMenuCheckboxItem>
 
-            <DropdownMenuCheckboxItem className="cursor-pointer hover:bg-zinc-800 data-[state=checked]:bg-zinc-800
+            <DropdownMenuCheckboxItem
+              className="cursor-pointer hover:bg-zinc-800 data-[state=checked]:bg-zinc-800
+    data-[state=checked]:text-white"
+              checked={modes.includes("age-range")}
+              onCheckedChange={() => toggleMode("age-range")}
+            >
+              Age Range
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel className="bg-zinc-700 rounded-lg">Rooms and Groups</DropdownMenuLabel>
+
+            <DropdownMenuCheckboxItem
+              className="cursor-pointer hover:bg-zinc-800 data-[state=checked]:bg-zinc-800
     data-[state=checked]:text-white"
               checked={modes.includes("unassigned-group")}
               onCheckedChange={() => toggleMode("unassigned-group")}
@@ -638,7 +759,8 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
               Unassigned Group
             </DropdownMenuCheckboxItem>
 
-            <DropdownMenuCheckboxItem className="cursor-pointer hover:bg-zinc-800 data-[state=checked]:bg-zinc-800
+            <DropdownMenuCheckboxItem
+              className="cursor-pointer hover:bg-zinc-800 data-[state=checked]:bg-zinc-800
     data-[state=checked]:text-white"
               checked={modes.includes("unassigned-room")}
               onCheckedChange={() => toggleMode("unassigned-room")}
@@ -646,7 +768,8 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
               Unassigned Room
             </DropdownMenuCheckboxItem>
 
-            <DropdownMenuCheckboxItem className="cursor-pointer hover:bg-zinc-800 data-[state=checked]:bg-zinc-800
+            <DropdownMenuCheckboxItem
+              className="cursor-pointer hover:bg-zinc-800 data-[state=checked]:bg-zinc-800
     data-[state=checked]:text-white"
               checked={modes.includes("assigned-both")}
               onCheckedChange={() => toggleMode("assigned-both")}
@@ -654,7 +777,8 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
               Assigned Both
             </DropdownMenuCheckboxItem>
 
-            <DropdownMenuCheckboxItem className="cursor-pointer hover:bg-zinc-800 data-[state=checked]:bg-zinc-800
+            <DropdownMenuCheckboxItem
+              className="cursor-pointer hover:bg-zinc-800 data-[state=checked]:bg-zinc-800
     data-[state=checked]:text-white"
               checked={modes.includes("unassigned")}
               onCheckedChange={() => toggleMode("unassigned")}
@@ -663,8 +787,10 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
             </DropdownMenuCheckboxItem>
 
             <DropdownMenuSeparator />
+            <DropdownMenuLabel className="bg-zinc-700 rounded-lg">Gender</DropdownMenuLabel>
 
-            <DropdownMenuCheckboxItem className="cursor-pointer hover:bg-zinc-800 data-[state=checked]:bg-zinc-800
+            <DropdownMenuCheckboxItem
+              className="cursor-pointer hover:bg-zinc-800 data-[state=checked]:bg-zinc-800
     data-[state=checked]:text-white"
               checked={modes.includes("male")}
               onCheckedChange={() => toggleMode("male")}
@@ -672,7 +798,8 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
               Male
             </DropdownMenuCheckboxItem>
 
-            <DropdownMenuCheckboxItem className="cursor-pointer hover:bg-zinc-800 data-[state=checked]:bg-zinc-800
+            <DropdownMenuCheckboxItem
+              className="cursor-pointer hover:bg-zinc-800 data-[state=checked]:bg-zinc-800
     data-[state=checked]:text-white"
               checked={modes.includes("female")}
               onCheckedChange={() => toggleMode("female")}
@@ -682,13 +809,25 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
 
             <DropdownMenuSeparator />
 
-            <DropdownMenuCheckboxItem className="cursor-pointer hover:bg-zinc-800 data-[state=checked]:bg-zinc-800
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel className="bg-zinc-700 rounded-lg">Report To Venue</DropdownMenuLabel>
+
+
+        <DropdownMenuCheckboxItem className="cursor-pointer hover:bg-zinc-800 data-[state=checked]:bg-zinc-800
     data-[state=checked]:text-white"
-              checked={modes.includes("age-range")}
-              onCheckedChange={() => toggleMode("age-range")}
-            >
-              Age Range
-            </DropdownMenuCheckboxItem>
+          checked={modes.includes("reported")}
+          onCheckedChange={() => toggleMode("reported")}
+        >
+          Reported
+        </DropdownMenuCheckboxItem>
+
+        <DropdownMenuCheckboxItem className="cursor-pointer hover:bg-zinc-800 data-[state=checked]:bg-zinc-800
+    data-[state=checked]:text-white"
+          checked={modes.includes("not-reported")}
+          onCheckedChange={() => toggleMode("not-reported")}
+        >
+          Not Reported
+        </DropdownMenuCheckboxItem>
           </DropdownMenuContent>
         </DropdownMenu>
 
@@ -747,6 +886,7 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
               assignRoom={assignRoom}
               assignGroup={assignGroup}
               loadingUserId={loadingUserId}
+              toggleReported={toggleReported}
             />
           ))
         ) : (

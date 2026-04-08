@@ -28,6 +28,7 @@ interface User {
   age?: number | null;
   gender?: string | null;
   churchName?: string | null;
+  phone? : string | number | null | undefined;
   groupId?: string | null;
   roomId?: string | null;
   roomMap?: any;
@@ -114,7 +115,7 @@ const [isOpen, setIsOpen] = React.useState(false);
                         //   { label: "Email", value: user.email },
                           { label: "Age", value: user.age },
                           { label: "Gender", value: user.gender },
-                        //   { label: "Church", value: user.churchName },
+                          { label: "Phone", value: user.phone },
                         ].map(({ label, value }) => (
                           <div
                             key={label}
