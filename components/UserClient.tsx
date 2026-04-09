@@ -438,7 +438,7 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
         );
 
         toast.success("Room assigned");
-        router.refresh();
+        // router.refresh();
       } catch {
         toast.error("Something went wrong");
       } finally {
@@ -508,7 +508,7 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
         );
 
         toast.success("Group assigned");
-        router.refresh();
+        // router.refresh();
       } catch (err) {
         console.error(err);
         toast.error("Something went wrong");
@@ -565,7 +565,7 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
         );
 
         toast.success(reported ? "Marked as reported" : "Unmarked");
-        router.refresh();
+        // router.refresh();
       } catch (err) {
         console.error(err);
         toast.error("Failed");

@@ -81,7 +81,6 @@ export async function GET(req) {
         roomId: u.roomId?.toString() || null,
         groupId: u.groupId?.toString() || null,
         reportedToVenue: u.reportedToVenue || false,
-        updatedAt: u.updatedAt,
       })),
     });
   } catch (err) {
