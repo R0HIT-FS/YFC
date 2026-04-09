@@ -1,3 +1,4 @@
+import SyncStatus from "@/components/SyncStatus";
 import UsersClient from "../../components/UserClient";
 async function getUsers() {
   const res = await fetch(`${process.env.NEXT_PUBLIC_URL}/api/users`, {
@@ -13,5 +14,9 @@ export const metadata = {
 export default async function Home() {
   const data = await getUsers();
   const users = data.users || [];
-  return <UsersClient users={users} />;
+  return (<>
+    <SyncStatus/>
+    <UsersClient users={users} />
+  </>
+  );
 }
