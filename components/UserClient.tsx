@@ -565,6 +565,7 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
         );
 
         toast.success(reported ? "Marked as reported" : "Unmarked");
+        router.refresh();
       } catch (err) {
         console.error(err);
         toast.error("Failed");
