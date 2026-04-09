@@ -2,16 +2,8 @@ import axios from "axios";
 import csv from "csvtojson";
 import clientPromise from "../../lib/db";
 
-import { NextRequest } from "next/server";
-
-export async function GET(req) {
-  const auth = req.headers.get("authorization");
-
-  if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
-    return new Response("Unauthorized", { status: 401 });
-  }
-
-    try {
+export async function GET() {
+  try {
     const SHEET_URL = process.env.SHEET_URL;
 
     if (!SHEET_URL) {

@@ -208,7 +208,7 @@ export default function SyncButton() {
     setMessage("");
 
     try {
-      const res = await fetch("/api/sync");
+      const res = await fetch("/api/manual-sync");
       const data = await res.json();
 
       if (data.success) {

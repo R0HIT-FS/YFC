@@ -15,7 +15,6 @@ export default async function Home() {
   const data = await getUsers();
   const users = data.users || [];
   return (<>
-    <SyncStatus/>
     <UsersClient users={users} />
   </>
   );

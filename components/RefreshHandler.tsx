@@ -6,6 +6,6 @@ import { useAutoRefresh } from "@/app/hooks/useAutoRefresh";
 
 export default function RefreshHandler() {
   // Call your hook here
-  useAutoRefresh(30000); 
+  useAutoRefresh(5000); 
   return null;
 }

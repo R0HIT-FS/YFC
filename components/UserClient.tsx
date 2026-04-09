@@ -29,6 +29,7 @@ import { Button } from "@/components/ui/button";
 import { Maximize2 } from "lucide-react";
 import React from "react";
 import RefreshHandler from "./RefreshHandler";
+import SyncStatus from "./SyncStatus";
 
 interface User {
   _id: string;
@@ -286,6 +287,7 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
   const [lastSync, setLastSync] = useState(new Date().toISOString());
   const [ageRange, setAgeRange] = useState<[number, number]>([0, 100]);
   const [modes, setModes] = useState<string[]>([]);
+  const [refreshFlag, setRefreshFlag] = useState(0);
 
   const toggleMode = (mode: string) => {
     setModes((prev) =>
@@ -332,6 +334,7 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
 
   useEffect(() => {
     let lastSyncRef = new Date().toISOString();
+    // let lastSyncRef = "";
 
     const poll = async () => {
       if (document.hidden) return;
@@ -354,6 +357,7 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
                 ...updated, // 🔥 merge only changed fields
               });
             }
+
           });
 
           return Array.from(map.values());
@@ -700,6 +704,7 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
   }, [users, debouncedSearch, modes, ageRange]);
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 p-10">
+      <SyncStatus/>
       <h1 className="text-3xl font-semibold mb-6">Delegates</h1>
 
       <p className="text-md text-zinc-400 mb-2">
@@ -728,7 +733,9 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
           >
             <DropdownMenuLabel>Filter Users</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuLabel className="bg-zinc-700 rounded-lg">Age</DropdownMenuLabel>
+            <DropdownMenuLabel className="bg-zinc-700 rounded-lg">
+              Age
+            </DropdownMenuLabel>
 
             <DropdownMenuCheckboxItem
               className="cursor-pointer hover:bg-zinc-800 data-[state=checked]:bg-zinc-800
@@ -748,7 +755,9 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
               Age Range
             </DropdownMenuCheckboxItem>
             <DropdownMenuSeparator />
-            <DropdownMenuLabel className="bg-zinc-700 rounded-lg">Rooms and Groups</DropdownMenuLabel>
+            <DropdownMenuLabel className="bg-zinc-700 rounded-lg">
+              Rooms and Groups
+            </DropdownMenuLabel>
 
             <DropdownMenuCheckboxItem
               className="cursor-pointer hover:bg-zinc-800 data-[state=checked]:bg-zinc-800
@@ -787,7 +796,9 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
             </DropdownMenuCheckboxItem>
 
             <DropdownMenuSeparator />
-            <DropdownMenuLabel className="bg-zinc-700 rounded-lg">Gender</DropdownMenuLabel>
+            <DropdownMenuLabel className="bg-zinc-700 rounded-lg">
+              Gender
+            </DropdownMenuLabel>
 
             <DropdownMenuCheckboxItem
               className="cursor-pointer hover:bg-zinc-800 data-[state=checked]:bg-zinc-800
@@ -810,24 +821,27 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
             <DropdownMenuSeparator />
 
             <DropdownMenuSeparator />
-            <DropdownMenuLabel className="bg-zinc-700 rounded-lg">Report To Venue</DropdownMenuLabel>
+            <DropdownMenuLabel className="bg-zinc-700 rounded-lg">
+              Report To Venue
+            </DropdownMenuLabel>
 
-
-        <DropdownMenuCheckboxItem className="cursor-pointer hover:bg-zinc-800 data-[state=checked]:bg-zinc-800
+            <DropdownMenuCheckboxItem
+              className="cursor-pointer hover:bg-zinc-800 data-[state=checked]:bg-zinc-800
     data-[state=checked]:text-white"
-          checked={modes.includes("reported")}
-          onCheckedChange={() => toggleMode("reported")}
-        >
-          Reported
-        </DropdownMenuCheckboxItem>
+              checked={modes.includes("reported")}
+              onCheckedChange={() => toggleMode("reported")}
+            >
+              Reported
+            </DropdownMenuCheckboxItem>
 
-        <DropdownMenuCheckboxItem className="cursor-pointer hover:bg-zinc-800 data-[state=checked]:bg-zinc-800
+            <DropdownMenuCheckboxItem
+              className="cursor-pointer hover:bg-zinc-800 data-[state=checked]:bg-zinc-800
     data-[state=checked]:text-white"
-          checked={modes.includes("not-reported")}
-          onCheckedChange={() => toggleMode("not-reported")}
-        >
-          Not Reported
-        </DropdownMenuCheckboxItem>
+              checked={modes.includes("not-reported")}
+              onCheckedChange={() => toggleMode("not-reported")}
+            >
+              Not Reported
+            </DropdownMenuCheckboxItem>
           </DropdownMenuContent>
         </DropdownMenu>
 

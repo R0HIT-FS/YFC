@@ -3,49 +3,54 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
+type SyncResponse = {
+  success: boolean;
+  lastSync: string;
+  added: number;
+};
+
 export default function SyncStatus() {
-  const [data, setData] = useState<any>(null);
-  const [prevAdded, setPrevAdded] = useState(0);
+  const [lastSync, setLastSync] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchStatus = async () => {
-      const res = await fetch("/api/sync-status");
-      const json = await res.json();
+    let isMounted = true;
 
-      if (json.success) {
-        setData(json);
+    const fetchSync = async () => {
+      try {
+        const res = await fetch("/api/last-sync");
+        const data: SyncResponse = await res.json();
 
-        // 🔥 Show toast only when new users added
-        if (json.added > 0 && json.added !== prevAdded) {
-          toast.success(`${json.added} new users added`);
-          setPrevAdded(json.added);
+        if (!data.success || !isMounted) return;
+
+        // first run → just store baseline
+        if (!lastSync) {
+          setLastSync(data.lastSync);
+          return;
         }
+
+        // detect change
+        if (data.lastSync !== lastSync) {
+          setLastSync(data.lastSync);
+
+          if (data.added > 0) {
+            toast.success(`${data.added} new users added`);
+          } else {
+            toast.info("Auto Syncing");
+          }
+        }
+      } catch (err) {
+        console.error("SyncStatus error:", err);
       }
     };
 
-    fetchStatus();
+    fetchSync();
+    const interval = setInterval(fetchSync, 60000);
 
-    const interval = setInterval(fetchStatus, 60000); // 1 min
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [lastSync]);
 
-    return () => clearInterval(interval);
-  }, [prevAdded]);
-
-  if (!data) return null;
-
-  return (
-    <div className="text-xs text-zinc-400">
-      <p>
-        Last Sync:{" "}
-        {data.lastSync
-          ? new Date(data.lastSync).toLocaleTimeString()
-          : "Never"}
-      </p>
-
-      {data.added > 0 && (
-        <p className="text-green-400">
-          +{data.added} new users added
-        </p>
-      )}
-    </div>
-  );
+  return null;
 }
