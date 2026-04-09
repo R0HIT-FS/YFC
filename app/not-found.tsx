@@ -25,3 +25,7 @@ export default function NotFound() {
     </div>
   );
 }
+
+export const metadata = {
+  title: "Not Found - Saviour Of Sinners",
+};
