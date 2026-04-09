@@ -31,6 +31,17 @@ export async function POST(req) {
     const client = await clientPromise;
     const db = client.db("yfc");
 
+    const userCount = await db.collection("users").countDocuments({
+      roomId,
+    });
+
+    if (limit < userCount) {
+      return NextResponse.json({
+        success: false,
+        error: `Limit cannot be less than current users (${userCount})`,
+      });
+    }
+
     await db.collection("rooms").updateOne(
       { _id: new ObjectId(roomId) },
       {
@@ -39,7 +50,7 @@ export async function POST(req) {
           limit: parsedLimit,
           updatedAt: new Date(),
         },
-      }
+      },
     );
 
     return Response.json({ success: true });

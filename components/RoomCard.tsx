@@ -126,6 +126,13 @@ function RoomCard({ room, users: initialUsers }: RoomCardProps) {
       return;
     }
 
+      if (editLimit < roomUsers.length) {
+    toast.error(
+      `Limit cannot be less than current users (${roomUsers.length})`
+    );
+    return;
+  }
+
     setSaving(true);
 
     try {
