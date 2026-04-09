@@ -21,7 +21,7 @@ export async function POST(req) {
       {
         $set: {
           reportedToVenue: reported,
-          reportedAt: reported ? new Date() : null,
+          updatedAt: new Date()
         },
       }
     );
