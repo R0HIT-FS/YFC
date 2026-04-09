@@ -70,6 +70,7 @@ export async function GET(req) {
         roomId: 1,
         groupId: 1,
         updatedAt: 1,
+        reportedToVenue:1,
       }) // 🔥 VERY IMPORTANT (small payload)
       .toArray();
 
@@ -79,6 +80,8 @@ export async function GET(req) {
         _id: u._id.toString(),
         roomId: u.roomId?.toString() || null,
         groupId: u.groupId?.toString() || null,
+        reportedToVenue: u.reportedToVenue || false,
+        updatedAt: u.updatedAt,
       })),
     });
   } catch (err) {
