@@ -24,17 +24,14 @@ export async function POST(req) {
 
     await session.withTransaction(async () => {
       // ✅ Get room
-      const room = await rooms.findOne(
-        { _id: roomObjectId },
-        { session }
-      );
+      const room = await rooms.findOne({ _id: roomObjectId }, { session });
 
       if (!room) throw new Error("Room not found");
 
       // 🔥 Source of truth: actual count
       const count = await users.countDocuments(
         { roomId: roomObjectId },
-        { session }
+        { session },
       );
 
       if (count >= room.limit) {
@@ -50,7 +47,18 @@ export async function POST(req) {
             updatedAt: new Date(),
           },
         },
-        { session }
+        { session },
+      );
+
+      await db.collection("meta").updateOne(
+        { key: "lastSync" },
+        {
+          $set: {
+            time: new Date(),
+            added: 0, // no new users, just update
+          },
+        },
+        { upsert: true },
       );
     });
 

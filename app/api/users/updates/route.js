@@ -44,7 +44,6 @@
 //   }
 // }
 
-
 import clientPromise from "../../../lib/db";
 
 export async function GET(req) {
@@ -65,13 +64,26 @@ export async function GET(req) {
       .find({
         updatedAt: { $gt: new Date(lastSync) },
       })
+      // .project({
+      //   _id: 1,
+      //   roomId: 1,
+      //   groupId: 1,
+      //   updatedAt: 1,
+      //   reportedToVenue:1,
+      // })
       .project({
         _id: 1,
+        name: 1,
+        age: 1,
+        email: 1,
+        gender: 1,
+        phone: 1,
+        churchName: 1,
         roomId: 1,
         groupId: 1,
+        reportedToVenue: 1,
         updatedAt: 1,
-        reportedToVenue:1,
-      }) // 🔥 VERY IMPORTANT (small payload)
+      })
       .toArray();
 
     return Response.json({

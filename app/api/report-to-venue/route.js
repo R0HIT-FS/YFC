@@ -9,7 +9,7 @@ export async function POST(req) {
     if (!userId) {
       return NextResponse.json(
         { success: false, error: "User ID required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -21,9 +21,20 @@ export async function POST(req) {
       {
         $set: {
           reportedToVenue: reported,
-          updatedAt: new Date()
+          updatedAt: new Date(),
         },
-      }
+      },
+    );
+
+    await db.collection("meta").updateOne(
+      { key: "lastSync" },
+      {
+        $set: {
+          time: new Date(),
+          added: 0,
+        },
+      },
+      { upsert: true },
     );
 
     return NextResponse.json({ success: true });
@@ -31,7 +42,7 @@ export async function POST(req) {
     console.error(error);
     return NextResponse.json(
       { success: false, error: "Failed to update" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

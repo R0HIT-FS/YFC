@@ -15,7 +15,18 @@ export async function POST(req) {
           groupId: new ObjectId(groupId),
           updatedAt: new Date(),
         },
-      }
+      },
+    );
+
+    await db.collection("meta").updateOne(
+      { key: "lastSync" },
+      {
+        $set: {
+          time: new Date(),
+          added: 0,
+        },
+      },
+      { upsert: true },
     );
 
     return Response.json({ success: true });

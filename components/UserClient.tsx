@@ -348,16 +348,31 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
         setUsers((prev) => {
           const map = new Map(prev.map((u) => [u._id, u]));
 
+          // data.users.forEach((updated: any) => {
+          //   const existing = map.get(updated._id);
+
+          //   if (existing) {
+          //     map.set(updated._id, {
+          //       ...existing,
+          //       ...updated, // 🔥 merge only changed fields
+          //     });
+          //   }
+
+          // });
+
           data.users.forEach((updated: any) => {
             const existing = map.get(updated._id);
 
             if (existing) {
+              // ✅ update existing
               map.set(updated._id, {
                 ...existing,
-                ...updated, // 🔥 merge only changed fields
+                ...updated,
               });
+            } else {
+              // 🔥 ADD NEW USER
+              map.set(updated._id, updated);
             }
-
           });
 
           return Array.from(map.values());
@@ -705,7 +720,7 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
   }, [users, debouncedSearch, modes, ageRange]);
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 p-10">
-      <SyncStatus/>
+      <SyncStatus />
       <h1 className="text-3xl font-semibold mb-6">Delegates</h1>
 
       <p className="text-md text-zinc-400 mb-2">
