@@ -148,7 +148,7 @@ const UserCard = React.memo(function UserCard({
           </button>
         </DialogTrigger>
 
-        <DialogContent className="bg-zinc-900 border border-zinc-800 text-zinc-100">
+        <DialogContent className="bg-zinc-900 border border-zinc-800 text-zinc-100 focus:outline-none outline-none focus:ring-0 focus-visible:ring-0 ring-0 shadow-none">
           <DialogHeader>
             <DialogTitle>Assign for {user.name}</DialogTitle>
           </DialogHeader>
@@ -745,7 +745,7 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
 
           <DropdownMenuContent
             align="start"
-            className="w-56 bg-zinc-900 border border-zinc-800 text-zinc-100"
+            className="w-56 bg-zinc-900 border border-zinc-800 text-zinc-100 focus:outline-none outline-none focus:ring-0 focus-visible:ring-0 ring-0 shadow-none"
           >
             <DropdownMenuLabel>Filter Users</DropdownMenuLabel>
             <DropdownMenuSeparator />

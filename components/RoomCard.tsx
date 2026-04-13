@@ -196,7 +196,7 @@ function RoomCard({ room, users: initialUsers }: RoomCardProps) {
                   </button>
                 </AlertDialogTrigger>
 
-                <AlertDialogContent className="bg-zinc-900 border border-zinc-800 text-zinc-100">
+                <AlertDialogContent className="bg-zinc-900 border border-zinc-800 text-zinc-100 focus:outline-none outline-none focus:ring-0 focus-visible:ring-0 ring-0 shadow-none">
                   <AlertDialogHeader>
                     <AlertDialogTitle>Remove User</AlertDialogTitle>
                     <AlertDialogDescription className="text-zinc-400">
@@ -236,7 +236,7 @@ function RoomCard({ room, users: initialUsers }: RoomCardProps) {
               </button>
             </AlertDialogTrigger>
 
-            <AlertDialogContent className="bg-zinc-900 border border-zinc-800 text-zinc-100">
+            <AlertDialogContent className="bg-zinc-900 border border-zinc-800 text-zinc-100 focus:outline-none outline-none focus:ring-0 focus-visible:ring-0 ring-0 shadow-none">
               <AlertDialogHeader>
                 <AlertDialogTitle className="text-red-500">
                   Delete Room
