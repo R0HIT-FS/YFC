@@ -297,7 +297,7 @@ export default function SyncButton() {
 
   return (
     <div className="h-screen flex items-center justify-center flex-col gap-5 p-5">
-      <div className="flex gap-3">
+      <div className="w-full flex flex-col sm:flex-row justify-center gap-3">
         <button
           onClick={handleSync}
           disabled={loading}
@@ -346,6 +346,12 @@ export default function SyncButton() {
           before proceeding with this operation.
         </AlertDescription>
       </Alert>
+        <button
+          className="w-full sm:max-w-md text-white bg-slate-600 hover:bg-slate-500 rounded-md text-sm cursor-pointer"
+        >
+          <a href="/export" className=" block py-2 px-4">Export Excel</a>
+          
+        </button>
 
       <p className="text-zinc-400 text-sm">
         Last Sync: {lastSync ? new Date(lastSync).toLocaleString() : "Never"}
