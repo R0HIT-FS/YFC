@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { Button } from "@/components/ui/button";
-import { Maximize2 } from "lucide-react";
+import { ExternalLink, Maximize2 } from "lucide-react";
 import React from "react";
 import RefreshHandler from "./RefreshHandler";
 import SyncStatus from "./SyncStatus";
@@ -683,7 +683,7 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
     // 🔥 apply ALL selected filters
     if (modes.length > 0) {
       result = result.filter((u) => {
-        return modes.every((mode) => {
+        return modes.some((mode) => {
           switch (mode) {
             case "unassigned-group":
               return !u.groupId;
@@ -901,6 +901,10 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
             />
           </div>
         )}
+
+        <div>
+          <a href="/analytics" target="_blank" className="block flex gap-2 items-center justify-center text-[16px] bg-zinc-900 border border-zinc-800 px-3 py-2 rounded-md text-sm hover:bg-zinc-800">Chart Analytics <ExternalLink size={'18px'}/></a>
+        </div>
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
