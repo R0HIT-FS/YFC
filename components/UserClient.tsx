@@ -236,7 +236,7 @@ const UserCard = React.memo(function UserCard({
                     className="flex justify-between px-4 py-2 text-sm"
                   >
                     <span className="text-zinc-400">{label}</span>
-                    <span className="text-zinc-100">{value || "-"}</span>
+                    <span className="text-zinc-100" onClick={() => {navigator.clipboard.writeText(String(value)); toast.success("Copied to Clipboard")}}>{value || "-"}</span>
                   </div>
                 ))}
               </div>
@@ -257,7 +257,7 @@ const UserCard = React.memo(function UserCard({
                     className="flex justify-between px-4 py-2 text-sm"
                   >
                     <span className="text-zinc-400">{label}</span>
-                    <span>{value || "Unassigned"}</span>
+                    <span onClick={() => {navigator.clipboard.writeText(String(value)); toast.success("Copied to Clipboard")}}>{value || "Unassigned"}</span>
                   </div>
                 ))}
               </div>

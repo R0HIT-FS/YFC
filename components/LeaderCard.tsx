@@ -20,6 +20,7 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
+import { toast } from "sonner";
 
 interface User {
   _id: string;
@@ -101,7 +102,7 @@ const [isOpen, setIsOpen] = React.useState(false);
                     </Button>
                   </DialogTrigger>
 
-                  <DialogContent className="bg-zinc-900 border border-zinc-800 text-zinc-100">
+                  <DialogContent className="bg-zinc-900 border border-zinc-800 text-zinc-100 focus:ring-0 focus-visible:ring-0 ring-0 shadow-none">
                     <DialogHeader>
                       <DialogTitle>Information</DialogTitle>
                       <DialogDescription>Details of the group member</DialogDescription>
@@ -122,7 +123,7 @@ const [isOpen, setIsOpen] = React.useState(false);
                             className="flex justify-between px-4 py-2 text-sm"
                           >
                             <span className="text-zinc-400">{label}</span>
-                            <span>{value || "-"}</span>
+                            <span onClick={() => {navigator.clipboard.writeText(String(value)); toast.success("Copied to Clipboard")}}>{value || "-"}</span>
                           </div>
                         ))}
                       </div>
@@ -148,7 +149,7 @@ const [isOpen, setIsOpen] = React.useState(false);
                             className="flex justify-between px-4 py-2 text-sm"
                           >
                             <span className="text-zinc-400">{label}</span>
-                            <span>{value || "Unassigned"}</span>
+                            <span onClick={() => {navigator.clipboard.writeText(String(value)); toast.success("Copied to Clipboard")}}>{value || "Unassigned"}</span>
                           </div>
                         ))}
                       </div>

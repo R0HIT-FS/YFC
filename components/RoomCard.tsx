@@ -276,7 +276,7 @@ function RoomCard({ room, users: initialUsers }: RoomCardProps) {
     </button>
   </DialogTrigger>
 
-  <DialogContent className="bg-zinc-900 border border-zinc-800 text-zinc-100 focus:outline-none outline-none">
+  <DialogContent className="bg-zinc-900 border border-zinc-800 text-zinc-100 focus:outline-none outline-none focus:ring-0 focus-visible:ring-0 ring-0 shadow-none">
     <DialogHeader>
       <DialogTitle>Edit Room</DialogTitle>
     </DialogHeader>
