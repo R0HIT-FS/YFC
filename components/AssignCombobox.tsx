@@ -79,7 +79,7 @@ import {
   ComboboxContent,
   ComboboxEmpty,
 } from "@/components/ui/combobox";
-import { cn } from "@/lib/utils";
+import { cn } from "@/app/lib/utils";
 
 interface AssignComboboxProps {
   value: string;
