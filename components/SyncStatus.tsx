@@ -58,8 +58,10 @@
 
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { toast } from "sonner";
+
 
 type SyncResponse = {
   success: boolean;
@@ -74,6 +76,7 @@ type SyncResponse = {
 export default function SyncStatus() {
   const prevSyncRef = useRef<string | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     let isMounted = true;
@@ -112,6 +115,7 @@ export default function SyncStatus() {
           if (deleted) parts.push(`${deleted} removed`);
 
           toast.success(`Sync completed: ${parts.join(", ")}`);
+          router.refresh();
         } else {
           toast.info("Sync completed");
         }
