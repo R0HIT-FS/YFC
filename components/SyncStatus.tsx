@@ -64,11 +64,16 @@ import { toast } from "sonner";
 type SyncResponse = {
   success: boolean;
   lastSync: string;
-  added: number;
+  total?: number;
+  inserted?: number;
+  updated?: number;
+  deleted?: number;
+  type?: string;
 };
 
 export default function SyncStatus() {
   const prevSyncRef = useRef<string | null>(null);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -80,33 +85,50 @@ export default function SyncStatus() {
 
         if (!data.success || !isMounted) return;
 
-        // first run
+        const currentSync = data.lastSync;
+
+        // first run baseline
         if (!prevSyncRef.current) {
-          prevSyncRef.current = data.lastSync;
+          prevSyncRef.current = currentSync;
           return;
         }
 
-        // detect change
-        if (data.lastSync !== prevSyncRef.current) {
-          prevSyncRef.current = data.lastSync;
+        // no change
+        if (currentSync === prevSyncRef.current) return;
 
-          if (data.added > 0) {
-            toast.success(`${data.added} new ${data.added > 1 ? 'users' : 'user' } added`);
-          } else {
-            toast.info("Auto Syncing Data"); // 🔥 optional
-          }
+        // update ref
+        prevSyncRef.current = currentSync;
+
+        // build message based on backend meta
+        const inserted = data.inserted ?? 0;
+        const updated = data.updated ?? 0;
+        const deleted = data.deleted ?? 0;
+
+        if (inserted || updated || deleted) {
+          const parts: string[] = [];
+
+          if (inserted) parts.push(`${inserted} added`);
+          if (updated) parts.push(`${updated} updated`);
+          if (deleted) parts.push(`${deleted} removed`);
+
+          toast.success(`Sync completed: ${parts.join(", ")}`);
+        } else {
+          toast.info("Sync completed");
         }
       } catch (err) {
         console.error("SyncStatus error:", err);
       }
     };
 
+    // initial fetch
     fetchSync();
-    const interval = setInterval(fetchSync, 5000);
+
+    // polling
+    intervalRef.current = setInterval(fetchSync, 5000);
 
     return () => {
       isMounted = false;
-      clearInterval(interval);
+      if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, []);
 
