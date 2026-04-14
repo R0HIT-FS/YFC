@@ -73,15 +73,34 @@ import clientPromise from "../../../lib/db";
 import crypto from "crypto";
 
 function generateHash(obj) {
-  return crypto.createHash("md5").update(JSON.stringify(obj)).digest("hex");
+  return crypto
+    .createHash("md5")
+    .update(JSON.stringify(obj))
+    .digest("hex");
 }
 
 export async function GET() {
   try {
     const SHEET_URL = process.env.SHEET_URL;
 
+    if (!SHEET_URL) {
+      return Response.json({
+        success: false,
+        error: "SHEET_URL is not defined",
+      });
+    }
+
     const response = await axios.get(SHEET_URL);
+
+    if (!response?.data) {
+      throw new Error("Empty CSV response");
+    }
+
     const rawData = await csv().fromString(response.data);
+
+    if (!rawData?.length) {
+      throw new Error("CSV has no data");
+    }
 
     const seenHashes = new Set();
 
@@ -91,21 +110,30 @@ export async function GET() {
         if (!email) return null;
 
         const user = {
-          name: item["Name:"]?.trim() || item["Name"]?.trim() || "No Name",
+          name:
+            item["Name:"]?.trim() ||
+            item["Name"]?.trim() ||
+            "No Name",
+
           email,
+
           age: item["Age:"] ? Number(item["Age:"]) : null,
           gender: item["Gender"]?.trim() || null,
           phone: item["Phone Number:"]?.trim() || null,
           churchName: item["College / Church"]?.trim() || null,
           locality: item["Area/Locality of residence"]?.trim() || null,
+
           transport:
             item[
               "Transport options (Buses will be arranged from BHEL & Secunderabad)"
             ]?.trim() || null,
+
           paymentStatus: item["Registration Amount paid"]?.trim() || null,
           paymentDate: item["Date of payment"]?.trim() || null,
+
           transactionId:
             item["Last 4 digits of Transaction ID"]?.trim() || null,
+
           consentGiven:
             item[
               "I understand that the YFC staff will take all possible care, but will not be responsible for any injury caused or loss sustained to His/Her property"
@@ -130,16 +158,19 @@ export async function GET() {
     const db = client.db("yfc");
     const collection = db.collection("users");
 
-    // 🔥 HARD RESET
-    await collection.deleteMany({});
-
-    // 🔥 CRITICAL: enforce uniqueness always
+    // ⚠️ IMPORTANT: do NOT recreate index every time (move to startup)
     await collection.createIndex({ rowHash: 1 }, { unique: true });
 
-    // insert fresh
-    if (data.length > 0) {
-      await collection.insertMany(data);
-    }
+    // 🔥 SAFE RESET (atomic using session)
+    const session = client.startSession();
+
+    await session.withTransaction(async () => {
+      await collection.deleteMany({}, { session });
+
+      if (data.length > 0) {
+        await collection.insertMany(data, { session });
+      }
+    });
 
     await db.collection("meta").updateOne(
       { key: "lastSync" },
@@ -156,7 +187,7 @@ export async function GET() {
 
     return Response.json({
       success: true,
-      message: "Reset completed",
+      message: "Reset sync completed safely",
       count: data.length,
     });
   } catch (error) {

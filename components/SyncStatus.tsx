@@ -93,7 +93,7 @@ export default function SyncStatus() {
           if (data.added > 0) {
             toast.success(`${data.added} new ${data.added > 1 ? 'users' : 'user' } added`);
           } else {
-            toast.info("Data updated"); // 🔥 optional
+            toast.info("Auto Syncing Data"); // 🔥 optional
           }
         }
       } catch (err) {

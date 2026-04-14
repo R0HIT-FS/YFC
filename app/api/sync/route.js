@@ -169,50 +169,63 @@ export async function GET(req) {
       });
     }
 
-    // 🔹 1. Fetch CSV
+    // 1. Fetch CSV
     const response = await axios.get(SHEET_URL);
 
     if (!response.data) {
       throw new Error("Empty CSV response");
     }
 
-    // 🔹 2. Convert CSV → JSON
+    // 2. Parse CSV
     const rawData = await csv().fromString(response.data);
 
     if (!rawData || rawData.length === 0) {
       throw new Error("CSV has no data");
     }
 
-
-    // 🔹 3. Transform data + generate hash
+    // 3. Transform + hash
     const data = rawData
       .map((item) => {
         const email = item["Email"]?.trim().toLowerCase();
         if (!email) return null;
 
         const user = {
-          name: item["Name:"]?.trim() || item["Name"]?.trim() || "No Name",
+          name:
+            item["Name:"]?.trim() ||
+            item["Name"]?.trim() ||
+            "No Name",
+
           email,
+
           age: item["Age:"]
             ? Number(item["Age:"])
             : item["Age"]
               ? Number(item["Age"])
               : null,
+
           gender: item["Gender"]?.trim() || null,
+
           phone:
             item["Phone Number:"]?.trim() ||
             item["Phone Number"]?.trim() ||
             null,
+
           churchName: item["College / Church"]?.trim() || null,
           locality: item["Area/Locality of residence"]?.trim() || null,
+
           transport:
             item[
               "Transport options (Buses will be arranged from BHEL & Secunderabad)"
             ]?.trim() || null,
-          paymentStatus: item["Registration Amount paid"]?.trim() || null,
+
+          paymentStatus:
+            item["Registration Amount paid"]?.trim() || null,
+
           paymentDate: item["Date of payment"]?.trim() || null,
+
           transactionId:
             item["Last 4 digits of Transaction ID"]?.trim() || null,
+
           consentGiven:
             item[
               "I understand that the YFC staff will take all possible care, but will not be responsible for any injury caused or loss sustained to His/Her property"
@@ -233,16 +246,15 @@ export async function GET(req) {
       throw new Error("No valid users found in sheet");
     }
 
-
-    // 🔹 4. DB connect
+    // 4. DB connect
     const client = await clientPromise;
     const db = client.db("yfc");
     const collection = db.collection("users");
 
-    // 🔥 Ensure unique index on rowHash
+    // Ensure index
     await collection.createIndex({ rowHash: 1 }, { unique: true });
 
-    // 🔹 5. UPSERT using rowHash (core fix)
+    // 5. UPSERT
     const operations = data.map((item) => ({
       updateOne: {
         filter: { rowHash: item.rowHash },
@@ -263,7 +275,14 @@ export async function GET(req) {
       ordered: false,
     });
 
-    // 🔹 6. META UPDATE
+    // 6. 🔥 CLEANUP (THIS WAS MISSING)
+    const sheetHashes = data.map((u) => u.rowHash);
+
+    await collection.deleteMany({
+      rowHash: { $nin: sheetHashes },
+    });
+
+    // 7. META UPDATE
     const metaCollection = db.collection("meta");
     const now = new Date();
 
@@ -278,15 +297,17 @@ export async function GET(req) {
           updated: result.modifiedCount,
         },
       },
-      { upsert: true },
+      { upsert: true }
     );
 
+    // 8. RESPONSE
     return Response.json({
       success: true,
-      message: "Smart sync completed",
+      message: "Smart sync completed (with cleanup)",
       total: data.length,
       new: result.upsertedCount,
       updated: result.modifiedCount,
+      deleted: result.deletedCount,
       lastSync: now,
     });
   } catch (error) {
