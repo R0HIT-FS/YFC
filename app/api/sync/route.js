@@ -183,7 +183,6 @@ export async function GET(req) {
       throw new Error("CSV has no data");
     }
 
-    console.log("RAW SAMPLE:", rawData[0]); // ✅ debug
 
     // 🔹 3. Transform data + generate hash
     const data = rawData
@@ -234,7 +233,6 @@ export async function GET(req) {
       throw new Error("No valid users found in sheet");
     }
 
-    console.log("CLEANED SAMPLE:", data[0]); // ✅ debug
 
     // 🔹 4. DB connect
     const client = await clientPromise;

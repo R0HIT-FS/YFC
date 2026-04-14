@@ -73,36 +73,16 @@ import clientPromise from "../../../lib/db";
 import crypto from "crypto";
 
 function generateHash(obj) {
-  const str = JSON.stringify(obj);
-  return crypto.createHash("md5").update(str).digest("hex");
+  return crypto.createHash("md5").update(JSON.stringify(obj)).digest("hex");
 }
 
 export async function GET() {
   try {
     const SHEET_URL = process.env.SHEET_URL;
 
-    if (!SHEET_URL) {
-      return Response.json({
-        success: false,
-        error: "SHEET_URL is not defined",
-      });
-    }
-
-    // 🔹 1. Fetch CSV
     const response = await axios.get(SHEET_URL);
-
-    if (!response.data) {
-      throw new Error("Empty CSV response");
-    }
-
-    // 🔹 2. Convert CSV → JSON
     const rawData = await csv().fromString(response.data);
 
-    if (!rawData || rawData.length === 0) {
-      throw new Error("CSV has no data");
-    }
-
-    // 🔹 3. Transform data (same structure as sync)
     const seenHashes = new Set();
 
     const data = rawData
@@ -113,16 +93,9 @@ export async function GET() {
         const user = {
           name: item["Name:"]?.trim() || item["Name"]?.trim() || "No Name",
           email,
-          age: item["Age:"]
-            ? Number(item["Age:"])
-            : item["Age"]
-              ? Number(item["Age"])
-              : null,
+          age: item["Age:"] ? Number(item["Age:"]) : null,
           gender: item["Gender"]?.trim() || null,
-          phone:
-            item["Phone Number:"]?.trim() ||
-            item["Phone Number"]?.trim() ||
-            null,
+          phone: item["Phone Number:"]?.trim() || null,
           churchName: item["College / Church"]?.trim() || null,
           locality: item["Area/Locality of residence"]?.trim() || null,
           transport:
@@ -137,16 +110,10 @@ export async function GET() {
             item[
               "I understand that the YFC staff will take all possible care, but will not be responsible for any injury caused or loss sustained to His/Her property"
             ]?.trim() || null,
-
-          // 🔥 reset fields
-          roomId: null,
-          groupId: null,
         };
 
-        // 🔥 FULL ROW HASH (important)
-        const rowHash = generateHash(item);
+        const rowHash = generateHash(user);
 
-        // ❌ prevent duplicates inside CSV
         if (seenHashes.has(rowHash)) return null;
         seenHashes.add(rowHash);
 
@@ -159,7 +126,6 @@ export async function GET() {
       })
       .filter(Boolean);
 
-    // 🔹 4. DB connect
     const client = await clientPromise;
     const db = client.db("yfc");
     const collection = db.collection("users");
@@ -167,18 +133,15 @@ export async function GET() {
     // 🔥 HARD RESET
     await collection.deleteMany({});
 
-    // 🔥 Ensure index exists
+    // 🔥 CRITICAL: enforce uniqueness always
     await collection.createIndex({ rowHash: 1 }, { unique: true });
 
-    // 🔹 5. Insert fresh clean data
+    // insert fresh
     if (data.length > 0) {
       await collection.insertMany(data);
     }
 
-    // 🔹 6. META UPDATE
-    const metaCollection = db.collection("meta");
-
-    await metaCollection.updateOne(
+    await db.collection("meta").updateOne(
       { key: "lastSync" },
       {
         $set: {
@@ -188,17 +151,15 @@ export async function GET() {
           type: "reset-sync",
         },
       },
-      { upsert: true },
+      { upsert: true }
     );
 
     return Response.json({
       success: true,
-      message: "Database reset & synced (clean + consistent)",
+      message: "Reset completed",
       count: data.length,
     });
   } catch (error) {
-    console.error("RESET ERROR:", error);
-
     return Response.json({
       success: false,
       error: error.message,
