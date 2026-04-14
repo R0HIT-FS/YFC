@@ -145,6 +145,12 @@
 import axios from "axios";
 import csv from "csvtojson";
 import clientPromise from "../../lib/db";
+import crypto from "crypto";
+
+function generateHash(obj) {
+  const str = JSON.stringify(obj);
+  return crypto.createHash("md5").update(str).digest("hex");
+}
 
 export async function GET(req) {
   const auth = req.headers.get("authorization");
@@ -165,27 +171,61 @@ export async function GET(req) {
 
     // 🔹 1. Fetch CSV
     const response = await axios.get(SHEET_URL);
+
+    if (!response.data) {
+      throw new Error("Empty CSV response");
+    }
+
+    // 🔹 2. Convert CSV → JSON
     const rawData = await csv().fromString(response.data);
 
-    // 🔹 2. Clean data
-    const seenEmails = new Set();
+    if (!rawData || rawData.length === 0) {
+      throw new Error("CSV has no data");
+    }
 
+    console.log("RAW SAMPLE:", rawData[0]); // ✅ debug
+
+    // 🔹 3. Transform data + generate hash
     const data = rawData
       .map((item) => {
-        const email = item.Email?.trim().toLowerCase();
-
+        const email = item["Email"]?.trim().toLowerCase();
         if (!email) return null;
-        if (seenEmails.has(email)) return null;
 
-        seenEmails.add(email);
+        const user = {
+          name: item["Name:"]?.trim() || item["Name"]?.trim() || "No Name",
+          email,
+          age: item["Age:"]
+            ? Number(item["Age:"])
+            : item["Age"]
+              ? Number(item["Age"])
+              : null,
+          gender: item["Gender"]?.trim() || null,
+          phone:
+            item["Phone Number:"]?.trim() ||
+            item["Phone Number"]?.trim() ||
+            null,
+          churchName: item["College / Church"]?.trim() || null,
+          locality: item["Area/Locality of residence"]?.trim() || null,
+          transport:
+            item[
+              "Transport options (Buses will be arranged from BHEL & Secunderabad)"
+            ]?.trim() || null,
+          paymentStatus: item["Registration Amount paid"]?.trim() || null,
+          paymentDate: item["Date of payment"]?.trim() || null,
+          transactionId:
+            item["Last 4 digits of Transaction ID"]?.trim() || null,
+          consentGiven:
+            item[
+              "I understand that the YFC staff will take all possible care, but will not be responsible for any injury caused or loss sustained to His/Her property"
+            ]?.trim() || null,
+        };
+
+        const rowHash = generateHash(user);
 
         return {
-          name: item.Name?.trim() || "No Name",
-          email,
-          age: item.Age ? Number(item.Age) : null,
-          gender: item.Gender?.trim() || null,
-          phone: item.Phone?.trim() || null,
-          churchName: item["Church"]?.trim() || null,
+          ...user,
+          rowHash,
+          updatedAt: new Date(),
         };
       })
       .filter(Boolean);
@@ -194,48 +234,38 @@ export async function GET(req) {
       throw new Error("No valid users found in sheet");
     }
 
-    // 🔹 3. DB connect
+    console.log("CLEANED SAMPLE:", data[0]); // ✅ debug
+
+    // 🔹 4. DB connect
     const client = await clientPromise;
     const db = client.db("yfc");
     const collection = db.collection("users");
 
-    await collection.createIndex({ email: 1 }, { unique: true });
+    // 🔥 Ensure unique index on rowHash
+    await collection.createIndex({ rowHash: 1 }, { unique: true });
 
-    // ✅ 🔥 4. FIND EXISTING USERS (NEW PART)
-    const existingUsers = await collection
-      .find({}, { projection: { email: 1 } })
-      .toArray();
-
-    const existingEmails = new Set(existingUsers.map((u) => u.email));
-
-    const newUsers = data.filter((u) => !existingEmails.has(u.email));
-    const addedUsers = newUsers.length;
-
-    // 🔹 5. UPSERT
+    // 🔹 5. UPSERT using rowHash (core fix)
     const operations = data.map((item) => ({
       updateOne: {
-        filter: { email: item.email },
-        // update: { $set: item },
+        filter: { rowHash: item.rowHash },
         update: {
           $set: {
             ...item,
-            updatedAt: new Date(), // 🔥 ADD THIS
+            updatedAt: new Date(),
+          },
+          $setOnInsert: {
+            createdAt: new Date(),
           },
         },
         upsert: true,
       },
     }));
 
-    await collection.bulkWrite(operations, { ordered: false });
-
-    // 🔹 6. CLEANUP
-    const sheetEmails = data.map((u) => u.email);
-
-    await collection.deleteMany({
-      email: { $nin: sheetEmails },
+    const result = await collection.bulkWrite(operations, {
+      ordered: false,
     });
 
-    // 🔹 7. META UPDATE
+    // 🔹 6. META UPDATE
     const metaCollection = db.collection("meta");
     const now = new Date();
 
@@ -246,7 +276,8 @@ export async function GET(req) {
           key: "lastSync",
           time: now,
           count: data.length,
-          added: addedUsers, // ✅ REAL NEW USERS
+          new: result.upsertedCount,
+          updated: result.modifiedCount,
         },
       },
       { upsert: true },
@@ -254,9 +285,10 @@ export async function GET(req) {
 
     return Response.json({
       success: true,
-      message: "Sync completed successfully",
-      count: data.length,
-      added: addedUsers,
+      message: "Smart sync completed",
+      total: data.length,
+      new: result.upsertedCount,
+      updated: result.modifiedCount,
       lastSync: now,
     });
   } catch (error) {
@@ -264,7 +296,7 @@ export async function GET(req) {
 
     return Response.json({
       success: false,
-      error: error.message,
+      error: error.message || "Something went wrong",
     });
   }
 }

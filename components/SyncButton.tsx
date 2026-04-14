@@ -212,7 +212,7 @@ export default function SyncButton() {
       const data = await res.json();
 
       if (data.success) {
-        setMessage(`✅ Synced ${data.count} records successfully 🚀`);
+        setMessage(`✅ Synced ${data.total} records successfully 🚀`);
         setLastSync(data.lastSync);
       } else {
         setMessage(`❌ ${data.error}`);
