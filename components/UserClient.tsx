@@ -906,7 +906,7 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
           <a href="/analytics" target="_blank" className="block flex gap-2 items-center justify-center text-[16px] bg-zinc-900 border border-zinc-800 px-3 py-2 rounded-md text-sm hover:bg-zinc-800">Chart Analytics <ExternalLink size={'18px'}/></a>
         </div>
         <div>
-          <button onClick={()=> router.refresh()} className="block w-full flex gap-2 items-center justify-center text-[16px] bg-zinc-900 border border-zinc-800 px-3 py-2 rounded-md text-sm hover:bg-zinc-800">Refresh <RotateCw size={'18px'}/></button>
+          <button onClick={() => router.refresh()} className="block w-full flex gap-2 items-center justify-center text-[16px] bg-zinc-900 border border-zinc-800 px-3 py-2 rounded-md text-sm hover:bg-zinc-800 cursor-pointer">Refresh <RotateCw size={'18px'}/></button>
         </div>
       </div>
 
