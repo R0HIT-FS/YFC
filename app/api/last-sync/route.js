@@ -21,7 +21,7 @@
 // }
 
 
-import clientPromise from '../../lib/db';
+import clientPromise from "../../lib/db";
 
 export async function GET() {
   try {
@@ -33,8 +33,11 @@ export async function GET() {
     return Response.json({
       success: true,
       lastSync: meta?.time || null,
-      count: meta?.count || 0,
-      added: meta?.added || 0, // 🔥 ADD THIS
+      total: meta?.total || meta?.count || 0,
+      inserted: meta?.inserted || meta?.upserted || meta?.new || 0,
+      updated: meta?.updated || meta?.modified || 0,
+      deleted: meta?.deleted || 0,
+      type: meta?.type || null,
     });
   } catch (error) {
     return Response.json({

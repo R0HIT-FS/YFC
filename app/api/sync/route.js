@@ -145,12 +145,7 @@
 import axios from "axios";
 import csv from "csvtojson";
 import clientPromise from "../../lib/db";
-import crypto from "crypto";
-
-function generateHash(obj) {
-  const str = JSON.stringify(obj);
-  return crypto.createHash("md5").update(str).digest("hex");
-}
+import { transformUsers } from "../../lib/sync/transformedUsers";
 
 export async function GET(req) {
   const auth = req.headers.get("authorization");
@@ -163,98 +158,30 @@ export async function GET(req) {
     const SHEET_URL = process.env.SHEET_URL;
 
     if (!SHEET_URL) {
-      return Response.json({
-        success: false,
-        error: "SHEET_URL is not defined",
-      });
+      return Response.json({ success: false, error: "Missing SHEET_URL" });
     }
 
-    // 1. Fetch CSV
     const response = await axios.get(SHEET_URL);
-
-    if (!response.data) {
-      throw new Error("Empty CSV response");
-    }
-
-    // 2. Parse CSV
     const rawData = await csv().fromString(response.data);
 
-    if (!rawData || rawData.length === 0) {
-      throw new Error("CSV has no data");
+    if (!rawData?.length) {
+      throw new Error("CSV empty");
     }
 
-    // 3. Transform + hash
-    const data = rawData
-      .map((item) => {
-        const email = item["Email"]?.trim().toLowerCase();
-        if (!email) return null;
+    const data = transformUsers(rawData);
 
-        const user = {
-          name:
-            item["Name:"]?.trim() ||
-            item["Name"]?.trim() ||
-            "No Name",
-
-          email,
-
-          age: item["Age:"]
-            ? Number(item["Age:"])
-            : item["Age"]
-              ? Number(item["Age"])
-              : null,
-
-          gender: item["Gender"]?.trim() || null,
-
-          phone:
-            item["Phone Number:"]?.trim() ||
-            item["Phone Number"]?.trim() ||
-            null,
-
-          churchName: item["College / Church"]?.trim() || null,
-          locality: item["Area/Locality of residence"]?.trim() || null,
-
-          transport:
-            item[
-              "Transport options (Buses will be arranged from BHEL & Secunderabad)"
-            ]?.trim() || null,
-
-          paymentStatus:
-            item["Registration Amount paid"]?.trim() || null,
-
-          paymentDate: item["Date of payment"]?.trim() || null,
-
-          transactionId:
-            item["Last 4 digits of Transaction ID"]?.trim() || null,
-
-          consentGiven:
-            item[
-              "I understand that the YFC staff will take all possible care, but will not be responsible for any injury caused or loss sustained to His/Her property"
-            ]?.trim() || null,
-        };
-
-        const rowHash = generateHash(user);
-
-        return {
-          ...user,
-          rowHash,
-          updatedAt: new Date(),
-        };
-      })
-      .filter(Boolean);
-
-    if (data.length === 0) {
-      throw new Error("No valid users found in sheet");
+    if (!data.length) {
+      throw new Error("No valid users");
     }
 
-    // 4. DB connect
     const client = await clientPromise;
     const db = client.db("yfc");
     const collection = db.collection("users");
 
-    // Ensure index
+    // NOTE: move this to startup in real production
     await collection.createIndex({ rowHash: 1 }, { unique: true });
 
-    // 5. UPSERT
+    // UPSERT
     const operations = data.map((item) => ({
       updateOne: {
         filter: { rowHash: item.rowHash },
@@ -275,47 +202,47 @@ export async function GET(req) {
       ordered: false,
     });
 
-    // 6. 🔥 CLEANUP (THIS WAS MISSING)
+    // SAFE CLEANUP
     const sheetHashes = data.map((u) => u.rowHash);
 
-    await collection.deleteMany({
-      rowHash: { $nin: sheetHashes },
-    });
+    let deleteCount = 0;
+    if (sheetHashes.length > 0) {
+      const deleteResult = await collection.deleteMany({
+        rowHash: { $nin: sheetHashes },
+      });
+      deleteCount = deleteResult.deletedCount;
+    }
 
-    // 7. META UPDATE
-    const metaCollection = db.collection("meta");
-    const now = new Date();
+    // META
+    const meta = db.collection("meta");
 
-    await metaCollection.updateOne(
+    await meta.updateOne(
       { key: "lastSync" },
       {
         $set: {
           key: "lastSync",
-          time: now,
-          count: data.length,
-          new: result.upsertedCount,
+          time: new Date(),
+          total: data.length,
+          inserted: result.upsertedCount,
           updated: result.modifiedCount,
+          deleted: deleteCount,
+          type: "smart-sync",
         },
       },
       { upsert: true }
     );
 
-    // 8. RESPONSE
     return Response.json({
       success: true,
-      message: "Smart sync completed (with cleanup)",
       total: data.length,
-      new: result.upsertedCount,
+      inserted: result.upsertedCount,
       updated: result.modifiedCount,
-      deleted: result.deletedCount,
-      lastSync: now,
+      deleted: deleteCount,
     });
   } catch (error) {
-    console.error("SYNC ERROR:", error);
-
     return Response.json({
       success: false,
-      error: error.message || "Something went wrong",
+      error: error.message,
     });
   }
 }

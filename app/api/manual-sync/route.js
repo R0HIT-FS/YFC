@@ -137,113 +137,29 @@
 import axios from "axios";
 import csv from "csvtojson";
 import clientPromise from "../../lib/db";
-import crypto from "crypto";
+import { transformUsers } from "../../lib/sync/transformedUsers";
 
-function generateHash(obj) {
-  const str = JSON.stringify(obj);
-  return crypto.createHash("md5").update(str).digest("hex");
-}
-
-export async function GET(req) {
+export async function GET() {
   try {
     const SHEET_URL = process.env.SHEET_URL;
 
-    if (!SHEET_URL) {
-      return Response.json({
-        success: false,
-        error: "SHEET_URL is not defined",
-      });
-    }
-
-    // 1. Fetch CSV
     const response = await axios.get(SHEET_URL);
     const rawData = await csv().fromString(response.data);
 
-    if (!rawData || rawData.length === 0) {
-      throw new Error("CSV has no data");
-    }
+    const data = transformUsers(rawData);
 
-    // 2. Transform data
-    const data = rawData
-      .map((item) => {
-        const email = item["Email"]?.trim().toLowerCase();
-        if (!email) return null;
-
-        const user = {
-          name:
-            item["Name:"]?.trim() ||
-            item["Name"]?.trim() ||
-            "No Name",
-
-          email,
-
-          age: item["Age:"]
-            ? Number(item["Age:"])
-            : item["Age"]
-              ? Number(item["Age"])
-              : null,
-
-          gender: item["Gender"]?.trim() || null,
-
-          phone:
-            item["Phone Number:"]?.trim() ||
-            item["Phone Number"]?.trim() ||
-            null,
-
-          churchName: item["College / Church"]?.trim() || null,
-          locality: item["Area/Locality of residence"]?.trim() || null,
-
-          transport:
-            item[
-              "Transport options (Buses will be arranged from BHEL & Secunderabad)"
-            ]?.trim() || null,
-
-          paymentStatus: item["Registration Amount paid"]?.trim() || null,
-          paymentDate: item["Date of payment"]?.trim() || null,
-
-          transactionId:
-            item["Last 4 digits of Transaction ID"]?.trim() || null,
-
-          consentGiven:
-            item[
-              "I understand that the YFC staff will take all possible care, but will not be responsible for any injury caused or loss sustained to His/Her property"
-            ]?.trim() || null,
-        };
-
-        const rowHash = generateHash(user);
-
-        return {
-          ...user,
-          rowHash,
-          updatedAt: new Date(),
-        };
-      })
-      .filter(Boolean);
-
-    if (data.length === 0) {
-      throw new Error("No valid users found in sheet");
-    }
-
-    // 3. DB connect
     const client = await clientPromise;
     const db = client.db("yfc");
     const collection = db.collection("users");
 
-    // ensure index
     await collection.createIndex({ rowHash: 1 }, { unique: true });
 
-    // 4. UPSERT
     const operations = data.map((item) => ({
       updateOne: {
         filter: { rowHash: item.rowHash },
         update: {
-          $set: {
-            ...item,
-            updatedAt: new Date(),
-          },
-          $setOnInsert: {
-            createdAt: new Date(),
-          },
+          $set: { ...item, updatedAt: new Date() },
+          $setOnInsert: { createdAt: new Date() },
         },
         upsert: true,
       },
@@ -253,27 +169,27 @@ export async function GET(req) {
       ordered: false,
     });
 
-    // 5. 🔥 CLEANUP (IMPORTANT FIX)
     const sheetHashes = data.map((u) => u.rowHash);
 
-    const deleteResult = await collection.deleteMany({
-      rowHash: { $nin: sheetHashes },
-    });
+    let deleted = 0;
+    if (sheetHashes.length > 0) {
+      const del = await collection.deleteMany({
+        rowHash: { $nin: sheetHashes },
+      });
+      deleted = del.deletedCount;
+    }
 
-    // 6. META UPDATE
-    const metaCollection = db.collection("meta");
-    const now = new Date();
-
-    await metaCollection.updateOne(
+    await db.collection("meta").updateOne(
       { key: "lastSync" },
       {
         $set: {
           key: "lastSync",
-          time: now,
-          count: data.length,
-          upserted: result.upsertedCount,
-          modified: result.modifiedCount,
-          deleted: deleteResult.deletedCount,
+          time: new Date(),
+          total: data.length,
+          inserted: result.upsertedCount,
+          updated: result.modifiedCount,
+          deleted,
+          type: "manual-sync",
         },
       },
       { upsert: true }
@@ -281,15 +197,12 @@ export async function GET(req) {
 
     return Response.json({
       success: true,
-      message: "Smart sync completed",
       total: data.length,
-      new: result.upsertedCount,
+      inserted: result.upsertedCount,
       updated: result.modifiedCount,
-      deleted: deleteResult.deletedCount,
+      deleted,
     });
   } catch (error) {
-    console.error("SYNC ERROR:", error);
-
     return Response.json({
       success: false,
       error: error.message,
