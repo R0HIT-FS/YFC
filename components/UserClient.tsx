@@ -26,7 +26,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Maximize2, RotateCw } from "lucide-react";
+import {
+  ExternalLink,
+  Maximize2,
+  RotateCw,
+  SlidersHorizontal,
+} from "lucide-react";
 import React from "react";
 import RefreshHandler from "./RefreshHandler";
 import SyncStatus from "./SyncStatus";
@@ -39,6 +44,9 @@ interface User {
   gender: string;
   phone?: string | number;
   churchName: string;
+  paymentStatus?: string | number;
+  transactionId?: string | number;
+  paymentDate?: string | number;
   roomId: string | null;
   groupId: string | null;
   reportedToVenue?: boolean;
@@ -236,9 +244,52 @@ const UserCard = React.memo(function UserCard({
                     className="flex justify-between px-4 py-2 text-sm"
                   >
                     <span className="text-zinc-400">{label}</span>
-                    <span className="text-zinc-100" onClick={() => {navigator.clipboard.writeText(String(value)); toast.success("Copied to Clipboard")}}>{value || "-"}</span>
+                    <span
+                      className="text-zinc-100"
+                      onClick={() => {
+                        navigator.clipboard.writeText(String(value));
+                        toast.success("Copied to Clipboard");
+                      }}
+                    >
+                      {value || "-"}
+                    </span>
                   </div>
                 ))}
+              </div>
+
+              <div className="rounded-lg border border-zinc-800 divide-y divide-zinc-800">
+                {[
+                  { label: "Payment Status", value: user.paymentStatus },
+                  { label: "Transaction ID", value: user.transactionId },
+                  { label: "Payment Date", value: user.paymentDate },
+                ].map(({ label, value }) => {
+                  const isStatus = label === "Payment Status";
+
+                  return (
+                    <div
+                      key={label}
+                      className="flex justify-between px-4 py-2 text-sm"
+                    >
+                      <span className="text-zinc-400">{label}</span>
+
+                      <span
+                        onClick={() => {
+                          navigator.clipboard.writeText(String(value));
+                          toast.success("Copied to Clipboard");
+                        }}
+                        className={
+                          isStatus
+                            ? value === "Yes"
+                              ? "text-green-500"
+                              : "text-red-500"
+                            : "text-zinc-100"
+                        }
+                      >
+                        {value || "-"}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
 
               <div className="rounded-lg border border-zinc-800 divide-y divide-zinc-800">
@@ -257,7 +308,14 @@ const UserCard = React.memo(function UserCard({
                     className="flex justify-between px-4 py-2 text-sm"
                   >
                     <span className="text-zinc-400">{label}</span>
-                    <span onClick={() => {navigator.clipboard.writeText(String(value)); toast.success("Copied to Clipboard")}}>{value || "Unassigned"}</span>
+                    <span
+                      onClick={() => {
+                        navigator.clipboard.writeText(String(value));
+                        toast.success("Copied to Clipboard");
+                      }}
+                    >
+                      {value || "Unassigned"}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -589,82 +647,6 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
     [],
   );
 
-  // const processedUsers = useMemo(() => {
-  //   const q = debouncedSearch.toLowerCase();
-
-  //   let result = users.filter(
-  //     (u) =>
-  //       u.name?.toLowerCase().includes(q) ||
-  //       u.churchName?.toLowerCase().includes(q) ||
-  //       u.age?.toString().includes(q),
-  //   );
-
-  //   switch (mode) {
-  //     case "name":
-  //       result.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
-  //       return result;
-  //     case "age":
-  //       result.sort((a, b) => (a.age || 0) - (b.age || 0));
-  //       return result;
-  //     case "assigned-any":
-  //       return result.filter((u) => u.roomId || u.groupId);
-  //     case "assigned-both":
-  //       return result.filter((u) => u.roomId && u.groupId);
-  //     case "unassigned":
-  //       return result.filter((u) => !u.roomId && !u.groupId);
-  //     case "male":
-  //       return result.filter((u) => u.gender?.toLowerCase() === "male");
-  //     case "female":
-  //       return result.filter((u) => u.gender?.toLowerCase() === "female");
-  //     default:
-  //       return result;
-  //   }
-  // }, [users, debouncedSearch, mode]);
-
-  // const processedUsers = useMemo(() => {
-  //   const q = debouncedSearch.trim().toLowerCase();
-
-  //   let result = users;
-
-  //   if (q) {
-  //     result = users.filter(
-  //       (u) =>
-  //         u.name?.toLowerCase().includes(q) ||
-  //         u.churchName?.toLowerCase().includes(q) ||
-  //         u.age?.toString().includes(q),
-  //     );
-  //   }
-
-  //   switch (mode) {
-  //     case "name":
-  //       return [...result].sort((a, b) =>
-  //         (a.name || "").localeCompare(b.name || ""),
-  //       );
-  //     case "age":
-  //       return [...result].sort((a, b) => (a.age || 0) - (b.age || 0));
-  //     // case "assigned-any":
-  //     //   return result.filter((u) => u.roomId || u.groupId);
-  //     case "unassigned-group":
-  //       return result.filter((u) =>  !u.groupId);
-  //     case "unassigned-room":
-  //       return result.filter((u) => !u.roomId);
-  //     case "assigned-both":
-  //       return result.filter((u) => u.roomId && u.groupId);
-  //     case "unassigned":
-  //       return result.filter((u) => !u.roomId && !u.groupId);
-  //     case "male":
-  //       return result.filter((u) => u.gender?.toLowerCase() === "male");
-  //     case "female":
-  //       return result.filter((u) => u.gender?.toLowerCase() === "female");
-  //     case "age-range":
-  //       return result.filter(
-  //         (u) => u.age !== null && u.age >= ageRange[0] && u.age <= ageRange[1],
-  //       );
-  //     default:
-  //       return result;
-  //   }
-  // }, [users, debouncedSearch, mode, ageRange]);
-
   const processedUsers = useMemo(() => {
     const q = debouncedSearch.trim().toLowerCase();
 
@@ -738,8 +720,9 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="text-[16px] bg-zinc-900 border border-zinc-800 px-3 py-2 rounded-md text-sm hover:bg-zinc-800">
-              Filters {modes.length > 0 && `(${modes.length})`}
+            <button className="flex gap-2 items-center justify-center text-[16px] bg-zinc-900 border border-zinc-800 px-3 py-2 rounded-md text-sm hover:bg-zinc-800">
+              Filters <SlidersHorizontal size={"18px"} />{" "}
+              {modes.length > 0 && `(${modes.length})`}
             </button>
           </DropdownMenuTrigger>
 
@@ -903,10 +886,21 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
         )}
 
         <div>
-          <a href="/analytics" target="_blank" className="block flex gap-2 items-center justify-center text-[16px] bg-zinc-900 border border-zinc-800 px-3 py-2 rounded-md text-sm hover:bg-zinc-800">Chart Analytics <ExternalLink size={'18px'}/></a>
+          <a
+            href="/analytics"
+            target="_blank"
+            className="block flex gap-2 items-center justify-center text-[16px] bg-zinc-900 border border-zinc-800 px-3 py-2 rounded-md text-sm hover:bg-zinc-800"
+          >
+            Chart Analytics <ExternalLink size={"18px"} />
+          </a>
         </div>
         <div>
-          <button onClick={() => router.refresh()} className="block w-full flex gap-2 items-center justify-center text-[16px] bg-zinc-900 border border-zinc-800 px-3 py-2 rounded-md text-sm hover:bg-zinc-800 cursor-pointer">Refresh <RotateCw size={'18px'}/></button>
+          <button
+            onClick={() => router.refresh()}
+            className="block w-full flex gap-2 items-center justify-center text-[16px] bg-zinc-900 border border-zinc-800 px-3 py-2 rounded-md text-sm hover:bg-zinc-800 cursor-pointer"
+          >
+            Refresh <RotateCw size={"18px"} />
+          </button>
         </div>
       </div>
 
