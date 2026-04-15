@@ -368,6 +368,7 @@ import {
   Card,
   CardContent,
 } from "@/components/ui/card";
+import { RotateCw } from "lucide-react";
 
 interface User {
   _id: string;
@@ -610,6 +611,15 @@ export default function AnalyticsPage() {
             />
           </div>
         )}
+
+                <div>
+          <button
+            onClick={() => window.location.reload()}
+            className="block w-full flex gap-2 items-center justify-center text-[16px] bg-zinc-900 border border-zinc-800 px-3 py-2 rounded-md text-sm hover:bg-zinc-800 cursor-pointer"
+          >
+            Refresh <RotateCw size={"18px"} />
+          </button>
+        </div>
       </div>
 
       {/* CHARTS GRID */}
@@ -626,7 +636,7 @@ export default function AnalyticsPage() {
               height={180}
               data={[
                 { name: "Male", value: male, fill: "#3b82f6" },
-                { name: "Female", value: female, fill: "#93c5fd" },
+                { name: "Female", value: female, fill: "#8B5AED" },
               ]}
               startAngle={180}
               endAngle={0}
@@ -662,7 +672,7 @@ export default function AnalyticsPage() {
                 <span className="text-zinc-300">Male : {male}</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-blue-300" />
+                <span className="w-3 h-3 rounded-full bg-[#8B5AED]" />
                 <span className="text-zinc-300">Female : {female}</span>
               </div>
             </div>
