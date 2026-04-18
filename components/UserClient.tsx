@@ -238,23 +238,31 @@ const UserCard = React.memo(function UserCard({
                   { label: "Gender", value: user.gender },
                   { label: "Phone", value: user.phone },
                   { label: "Church", value: user.churchName },
-                ].map(({ label, value }) => (
-                  <div
-                    key={label}
-                    className="flex justify-between px-4 py-2 text-sm"
-                  >
-                    <span className="text-zinc-400">{label}</span>
-                    <span
-                      className="text-zinc-100"
-                      onClick={() => {
-                        navigator.clipboard.writeText(String(value));
-                        toast.success("Copied to Clipboard");
-                      }}
+                ].map(({ label, value }) => {
+                  const isPhone = label === "Phone";
+                  return (
+                    <div
+                      key={label}
+                      className="flex justify-between px-4 py-2 text-sm"
                     >
-                      {value || "-"}
-                    </span>
-                  </div>
-                ))}
+                      <span className="text-zinc-400">{label}</span>
+
+                      {isPhone ? (
+                        <a href={`tel:${value}`}>{value}</a>
+                      ) : (
+                        <span
+                          className="text-zinc-100"
+                          onClick={() => {
+                            navigator.clipboard.writeText(String(value));
+                            toast.success("Copied to Clipboard");
+                          }}
+                        >
+                          {value || "-"}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
 
               <div className="rounded-lg border border-zinc-800 divide-y divide-zinc-800">
@@ -271,7 +279,6 @@ const UserCard = React.memo(function UserCard({
                       className="flex justify-between px-4 py-2 text-sm"
                     >
                       <span className="text-zinc-400">{label}</span>
-
                       <span
                         onClick={() => {
                           navigator.clipboard.writeText(String(value));
@@ -663,38 +670,85 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
     }
 
     // 🔥 apply ALL selected filters
+    // if (modes.length > 0) {
+    //   result = result.filter((u) => {
+    //     return modes.some((mode) => {
+    //       switch (mode) {
+    //         case "unassigned-group":
+    //           return !u.groupId;
+    //         case "unassigned-room":
+    //           return !u.roomId;
+    //         case "assigned-both":
+    //           return u.roomId && u.groupId;
+    //         case "unassigned":
+    //           return !u.roomId && !u.groupId;
+    //         case "male":
+    //           return u.gender?.toLowerCase() === "male";
+    //         case "female":
+    //           return u.gender?.toLowerCase() === "female";
+    //         case "reported":
+    //           return u.reportedToVenue === true;
+    //         case "not-reported":
+    //           return !u.reportedToVenue;
+    //         case "age-range":
+    //           return (
+    //             u.age !== null && u.age >= ageRange[0] && u.age <= ageRange[1]
+    //           );
+    //         default:
+    //           return true;
+    //       }
+    //     });
+    //   });
+    // }
+
     if (modes.length > 0) {
+      const genderModes = modes.filter((m) => m === "male" || m === "female");
+
+      const otherModes = modes.filter(
+        (m) => m !== "male" && m !== "female" && m !== "age-range",
+      );
+
       result = result.filter((u) => {
-        return modes.some((mode) => {
-          switch (mode) {
-            case "unassigned-group":
-              return !u.groupId;
-            case "unassigned-room":
-              return !u.roomId;
-            case "assigned-both":
-              return u.roomId && u.groupId;
-            case "unassigned":
-              return !u.roomId && !u.groupId;
-            case "male":
-              return u.gender?.toLowerCase() === "male";
-            case "female":
-              return u.gender?.toLowerCase() === "female";
-            case "reported":
-              return u.reportedToVenue === true;
-            case "not-reported":
-              return !u.reportedToVenue;
-            case "age-range":
-              return (
-                u.age !== null && u.age >= ageRange[0] && u.age <= ageRange[1]
-              );
-            default:
-              return true;
-          }
-        });
+        // ✅ gender OR
+        const genderMatch =
+          genderModes.length === 0 ||
+          genderModes.some((mode) => {
+            if (mode === "male") return u.gender?.toLowerCase() === "male";
+            if (mode === "female") return u.gender?.toLowerCase() === "female";
+            return false;
+          });
+
+        // ✅ other filters AND
+        const otherMatch =
+          otherModes.length === 0 ||
+          otherModes.every((mode) => {
+            switch (mode) {
+              case "unassigned-group":
+                return !u.groupId;
+              case "unassigned-room":
+                return !u.roomId;
+              case "assigned-both":
+                return u.roomId && u.groupId;
+              case "unassigned":
+                return !u.roomId && !u.groupId;
+              case "reported":
+                return u.reportedToVenue === true;
+              case "not-reported":
+                return !u.reportedToVenue;
+              default:
+                return true;
+            }
+          });
+
+        // ✅ age ALWAYS applied
+        const ageMatch =
+          u.age != null && u.age >= ageRange[0] && u.age <= ageRange[1];
+
+        return genderMatch && otherMatch && ageMatch;
       });
     }
 
-    if (modes.includes("age")) {
+    if (modes.includes("age-range")) {
       result = [...result].sort((a, b) => (a.age || 0) - (b.age || 0));
     }
 
@@ -894,9 +948,10 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
             Chart Analytics <ExternalLink size={"18px"} />
           </a>
         </div>
+
         <div>
           <button
-            onClick={() => router.refresh()}
+            onClick={() => window.location.reload()}
             className="block w-full flex gap-2 items-center justify-center text-[16px] bg-zinc-900 border border-zinc-800 px-3 py-2 rounded-md text-sm hover:bg-zinc-800 cursor-pointer"
           >
             Refresh <RotateCw size={"18px"} />
