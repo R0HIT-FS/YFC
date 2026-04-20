@@ -39,7 +39,6 @@
 
 // export default async function GroupsPage() {
 //   const { groups, users } = await getData();
-  
 
 //   return (
 //     <div className="min-h-screen bg-zinc-950 text-zinc-100 p-10">
@@ -47,14 +46,14 @@
 //       <CreateGroup />
 
 //       <h2 className="text-3xl font-semibold mb-8 mt-10">Groups</h2>
-      
+
 //       {/* Safety check: Only map if groups exists */}
 //       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
 //         {groups && groups.length > 0 ? (
 //           groups.map((group) => (
-//             <GroupCard 
-//               key={group._id} 
-//               group={group} 
+//             <GroupCard
+//               key={group._id}
+//               group={group}
 //               users={users ?? []} // Ensure users is never undefined
 //             />
 //           ))
@@ -67,14 +66,13 @@
 //   );
 // }
 
-
-
 export const dynamic = "force-dynamic";
 
 import clientPromise from "../../lib/db";
 import GroupCard from "../../../components/GroupCard";
 import CreateGroup from "@/components/CreateGroup";
 import RefreshHandler from "@/components/RefreshHandler";
+import ExportPDFButton from "@/components/ExportPdfButton";
 
 interface User {
   _id: string;
@@ -144,6 +142,10 @@ export default async function GroupsPage() {
       <CreateGroup />
 
       <h2 className="text-3xl font-semibold mb-8 mt-10">Groups</h2>
+
+      <div className="flex items-center justify-between mb-8 mt-10">
+        <ExportPDFButton groups={groups} usersByGroup={usersByGroup} />
+      </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {groups.length > 0 ? (

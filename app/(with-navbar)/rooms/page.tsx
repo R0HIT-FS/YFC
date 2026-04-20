@@ -79,6 +79,7 @@ import CreateRoom from "@/components/CreateRoom";
 import clientPromise from "../../lib/db";
 import RoomCard from "@/components/RoomCard";
 import RefreshHandler from "@/components/RefreshHandler";
+import ExportRoomsPDFButton from "@/components/ExportroomsPdfButton";
 
 // Interfaces
 interface User {
@@ -146,6 +147,10 @@ export default async function RoomsPage() {
       <CreateRoom />
 
       <h2 className="text-3xl font-semibold mb-8 mt-10">Rooms</h2>
+
+      <div className="flex items-center justify-between mb-8 mt-10">
+  <ExportRoomsPDFButton rooms={rooms} usersByRoom={usersByRoom} />
+</div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {rooms.length > 0 ? (
