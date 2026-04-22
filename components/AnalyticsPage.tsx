@@ -276,7 +276,7 @@
 //             endAngle={0}
 //             innerRadius="70%"
 //             outerRadius="100%"
-          
+
 //           >
 //             <PolarAngleAxis
 //               type="number"
@@ -332,8 +332,6 @@
 //   );
 // }
 
-
-
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -364,10 +362,7 @@ import {
   Tooltip as RechartsTooltip,
 } from "recharts";
 
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { RotateCw } from "lucide-react";
 
 interface User {
@@ -378,6 +373,7 @@ interface User {
   roomId: string | null;
   groupId: string | null;
   reportedToVenue?: boolean;
+  paymentVerified?: boolean;
 }
 
 const AGE_BUCKETS = [
@@ -425,7 +421,7 @@ export default function AnalyticsPage() {
 
   const toggleMode = (mode: string) => {
     setModes((prev) =>
-      prev.includes(mode) ? prev.filter((m) => m !== mode) : [...prev, mode]
+      prev.includes(mode) ? prev.filter((m) => m !== mode) : [...prev, mode],
     );
   };
 
@@ -455,6 +451,10 @@ export default function AnalyticsPage() {
               return u.reportedToVenue === true;
             case "not-reported":
               return !u.reportedToVenue;
+            case "payment-verified":
+              return u.paymentVerified === true;
+            case "payment-unverified":
+              return !u.paymentVerified;
             case "age-range":
               return (
                 u.age !== null && u.age >= ageRange[0] && u.age <= ageRange[1]
@@ -489,17 +489,25 @@ export default function AnalyticsPage() {
     return AGE_BUCKETS.map((bucket) => ({
       label: bucket.label,
       count: processedUsers.filter(
-        (u) => u.age !== null && u.age >= bucket.min && u.age <= bucket.max
+        (u) => u.age !== null && u.age >= bucket.min && u.age <= bucket.max,
       ).length,
     }));
   }, [processedUsers]);
 
   // Assignment status
   const assignmentData = useMemo(() => {
-    const assignedBoth = processedUsers.filter((u) => u.roomId && u.groupId).length;
-    const roomOnly = processedUsers.filter((u) => u.roomId && !u.groupId).length;
-    const groupOnly = processedUsers.filter((u) => !u.roomId && u.groupId).length;
-    const neitherAssigned = processedUsers.filter((u) => !u.roomId && !u.groupId).length;
+    const assignedBoth = processedUsers.filter(
+      (u) => u.roomId && u.groupId,
+    ).length;
+    const roomOnly = processedUsers.filter(
+      (u) => u.roomId && !u.groupId,
+    ).length;
+    const groupOnly = processedUsers.filter(
+      (u) => !u.roomId && u.groupId,
+    ).length;
+    const neitherAssigned = processedUsers.filter(
+      (u) => !u.roomId && !u.groupId,
+    ).length;
 
     return [
       { label: "Both", count: assignedBoth, color: "#22c55e" },
@@ -526,7 +534,9 @@ export default function AnalyticsPage() {
             <DropdownMenuLabel>Filter Users</DropdownMenuLabel>
             <DropdownMenuSeparator />
 
-            <DropdownMenuLabel className="bg-zinc-700 rounded-lg">Age</DropdownMenuLabel>
+            <DropdownMenuLabel className="bg-zinc-700 rounded-lg">
+              Age
+            </DropdownMenuLabel>
             <DropdownMenuCheckboxItem
               checked={modes.includes("age-range")}
               onCheckedChange={() => toggleMode("age-range")}
@@ -535,9 +545,16 @@ export default function AnalyticsPage() {
             </DropdownMenuCheckboxItem>
 
             <DropdownMenuSeparator />
-            <DropdownMenuLabel className="bg-zinc-700 rounded-lg">Rooms and Groups</DropdownMenuLabel>
+            <DropdownMenuLabel className="bg-zinc-700 rounded-lg">
+              Rooms and Groups
+            </DropdownMenuLabel>
 
-            {["unassigned-group", "unassigned-room", "assigned-both", "unassigned"].map((m) => (
+            {[
+              "unassigned-group",
+              "unassigned-room",
+              "assigned-both",
+              "unassigned",
+            ].map((m) => (
               <DropdownMenuCheckboxItem
                 key={m}
                 checked={modes.includes(m)}
@@ -548,7 +565,9 @@ export default function AnalyticsPage() {
             ))}
 
             <DropdownMenuSeparator />
-            <DropdownMenuLabel className="bg-zinc-700 rounded-lg">Gender</DropdownMenuLabel>
+            <DropdownMenuLabel className="bg-zinc-700 rounded-lg">
+              Gender
+            </DropdownMenuLabel>
 
             {["male", "female"].map((m) => (
               <DropdownMenuCheckboxItem
@@ -561,9 +580,25 @@ export default function AnalyticsPage() {
             ))}
 
             <DropdownMenuSeparator />
-            <DropdownMenuLabel className="bg-zinc-700 rounded-lg">Report To Venue</DropdownMenuLabel>
+            <DropdownMenuLabel className="bg-zinc-700 rounded-lg">
+              Report To Venue
+            </DropdownMenuLabel>
 
             {["reported", "not-reported"].map((m) => (
+              <DropdownMenuCheckboxItem
+                key={m}
+                checked={modes.includes(m)}
+                onCheckedChange={() => toggleMode(m)}
+              >
+                {m.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+              </DropdownMenuCheckboxItem>
+            ))}
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel className="bg-zinc-700 rounded-lg">
+              Payment Verification
+            </DropdownMenuLabel>
+
+            {["payment-verified", "payment-unverified"].map((m) => (
               <DropdownMenuCheckboxItem
                 key={m}
                 checked={modes.includes(m)}
@@ -579,7 +614,9 @@ export default function AnalyticsPage() {
           <div className="w-[220px] bg-zinc-900 border border-zinc-800 rounded-md p-3">
             <div className="flex justify-between text-xs mb-2">
               <span>Age Range</span>
-              <span>{ageRange[0]} - {ageRange[1]}</span>
+              <span>
+                {ageRange[0]} - {ageRange[1]}
+              </span>
             </div>
             <Slider
               value={ageRange}
@@ -587,7 +624,7 @@ export default function AnalyticsPage() {
               max={100}
               step={1}
               onValueChange={(v) => setAgeRange(v as [number, number])}
-                            className="
+              className="
     w-full
 
     /* Track (full line) */
@@ -612,7 +649,7 @@ export default function AnalyticsPage() {
           </div>
         )}
 
-                <div>
+        <div>
           <button
             onClick={() => window.location.reload()}
             className="block w-full flex gap-2 items-center justify-center text-[16px] bg-zinc-900 border border-zinc-800 px-3 py-2 rounded-md text-sm hover:bg-zinc-800 cursor-pointer"
@@ -624,12 +661,13 @@ export default function AnalyticsPage() {
 
       {/* CHARTS GRID */}
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-
         {/* Gender Radial Chart */}
         <Card className="bg-zinc-900 border-zinc-800 focus:outline-none outline-none focus:ring-0 focus-visible:ring-0 ring-0 shadow-none">
           <CardContent className="p-6 flex flex-col items-center">
             <h2 className="text-lg font-medium mb-1">Gender Distribution</h2>
-            <p className="text-xs text-zinc-400 mb-6">Based on selected filters</p>
+            <p className="text-xs text-zinc-400 mb-6">
+              Based on selected filters
+            </p>
 
             <RadialBarChart
               width={300}
@@ -643,7 +681,11 @@ export default function AnalyticsPage() {
               innerRadius="70%"
               outerRadius="100%"
             >
-              <PolarAngleAxis type="number" domain={[0, total || 1]} tick={false} />
+              <PolarAngleAxis
+                type="number"
+                domain={[0, total || 1]}
+                tick={false}
+              />
               <Tooltip
                 content={({ active, payload }) => {
                   if (active && payload && payload.length) {
@@ -683,7 +725,9 @@ export default function AnalyticsPage() {
         <Card className="bg-zinc-900 border-zinc-800 focus:outline-none outline-none focus:ring-0 focus-visible:ring-0 ring-0 shadow-none">
           <CardContent className="p-6">
             <h2 className="text-lg font-medium mb-1">Age Distribution</h2>
-            <p className="text-xs text-zinc-400 mb-6">Delegates grouped by age bracket</p>
+            <p className="text-xs text-zinc-400 mb-6">
+              Delegates grouped by age bracket
+            </p>
 
             <ResponsiveContainer width="100%" height={220}>
               <BarChart
@@ -691,7 +735,11 @@ export default function AnalyticsPage() {
                 margin={{ top: 4, right: 8, left: -20, bottom: 0 }}
                 barCategoryGap="30%"
               >
-                <CartesianGrid strokeDasharray="3 3" stroke="#3f3f46" vertical={false} />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="#3f3f46"
+                  vertical={false}
+                />
                 <XAxis
                   dataKey="name"
                   tick={{ fill: "#a1a1aa", fontSize: 11 }}
@@ -721,10 +769,15 @@ export default function AnalyticsPage() {
 
             <div className="flex flex-wrap gap-x-4 gap-y-1 mt-4 justify-center">
               {ageData.map((b, i) => (
-                <div key={b.label} className="flex items-center gap-1.5 text-xs text-zinc-400">
+                <div
+                  key={b.label}
+                  className="flex items-center gap-1.5 text-xs text-zinc-400"
+                >
                   <span
                     className="w-2.5 h-2.5 rounded-sm"
-                    style={{ background: `hsl(${200 + i * 20}, 80%, ${55 + i * 3}%)` }}
+                    style={{
+                      background: `hsl(${200 + i * 20}, 80%, ${55 + i * 3}%)`,
+                    }}
                   />
                   {b.label}: {b.count}
                 </div>
@@ -737,15 +790,25 @@ export default function AnalyticsPage() {
         <Card className="bg-zinc-900 border-zinc-800 focus:outline-none outline-none focus:ring-0 focus-visible:ring-0 ring-0 shadow-none">
           <CardContent className="p-6">
             <h2 className="text-lg font-medium mb-1">Assignment Status</h2>
-            <p className="text-xs text-zinc-400 mb-6">Room & group assignment breakdown</p>
+            <p className="text-xs text-zinc-400 mb-6">
+              Room & group assignment breakdown
+            </p>
 
             <ResponsiveContainer width="100%" height={220}>
               <BarChart
-                data={assignmentData.map((d) => ({ name: d.label, count: d.count, color: d.color }))}
+                data={assignmentData.map((d) => ({
+                  name: d.label,
+                  count: d.count,
+                  color: d.color,
+                }))}
                 margin={{ top: 4, right: 8, left: -20, bottom: 0 }}
                 barCategoryGap="30%"
               >
-                <CartesianGrid strokeDasharray="3 3" stroke="#3f3f46" vertical={false} />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="#3f3f46"
+                  vertical={false}
+                />
                 <XAxis
                   dataKey="name"
                   tick={{ fill: "#a1a1aa", fontSize: 11 }}
@@ -772,15 +835,20 @@ export default function AnalyticsPage() {
 
             <div className="flex flex-wrap gap-x-4 gap-y-1 mt-4 justify-center">
               {assignmentData.map((d) => (
-                <div key={d.label} className="flex items-center gap-1.5 text-xs text-zinc-400">
-                  <span className="w-2.5 h-2.5 rounded-sm" style={{ background: d.color }} />
+                <div
+                  key={d.label}
+                  className="flex items-center gap-1.5 text-xs text-zinc-400"
+                >
+                  <span
+                    className="w-2.5 h-2.5 rounded-sm"
+                    style={{ background: d.color }}
+                  />
                   {d.label}: {d.count}
                 </div>
               ))}
             </div>
           </CardContent>
         </Card>
-
       </div>
     </div>
   );

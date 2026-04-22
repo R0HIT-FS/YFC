@@ -64,7 +64,7 @@ interface UserCardProps {
   assignGroup: (userId: string, groupId: string) => Promise<void>;
   loadingUserId: string | null;
   toggleReported: (userId: string, reported: boolean) => void;
-  togglePayment : (userId: string, verified: boolean) => void;
+  togglePayment: (userId: string, verified: boolean) => void;
 }
 
 interface UsersClientProps {
@@ -729,7 +729,6 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
       );
     }
 
-
     if (modes.length > 0) {
       const genderModes = modes.filter((m) => m === "male" || m === "female");
 
@@ -764,6 +763,10 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
                 return u.reportedToVenue === true;
               case "not-reported":
                 return !u.reportedToVenue;
+              case "payment-verified":
+                return u.paymentVerified === true;
+              case "payment-unverified":
+                return !u.paymentVerified;
               default:
                 return true;
             }
@@ -923,6 +926,29 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
               onCheckedChange={() => toggleMode("not-reported")}
             >
               Not Reported
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel className="bg-zinc-700 rounded-lg">
+              Payment Verification
+            </DropdownMenuLabel>
+
+            <DropdownMenuCheckboxItem
+              className="cursor-pointer hover:bg-zinc-800 data-[state=checked]:bg-zinc-800
+    data-[state=checked]:text-white"
+              checked={modes.includes("payment-verified")}
+              onCheckedChange={() => toggleMode("payment-verified")}
+            >
+              Verified
+            </DropdownMenuCheckboxItem>
+
+            <DropdownMenuCheckboxItem
+              className="cursor-pointer hover:bg-zinc-800 data-[state=checked]:bg-zinc-800
+    data-[state=checked]:text-white"
+              checked={modes.includes("payment-unverified")}
+              onCheckedChange={() => toggleMode("payment-unverified")}
+            >
+              Unverified
             </DropdownMenuCheckboxItem>
           </DropdownMenuContent>
         </DropdownMenu>
