@@ -82,6 +82,7 @@ export async function GET(req) {
         roomId: 1,
         groupId: 1,
         reportedToVenue: 1,
+        paymentVerified: 1,
         updatedAt: 1,
       })
       .toArray();
@@ -93,6 +94,7 @@ export async function GET(req) {
         roomId: u.roomId?.toString() || null,
         groupId: u.groupId?.toString() || null,
         reportedToVenue: u.reportedToVenue || false,
+        paymentVerified: u.paymentVerified || false,
       })),
     });
   } catch (err) {

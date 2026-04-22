@@ -31,6 +31,7 @@ import {
   Maximize2,
   RotateCw,
   SlidersHorizontal,
+  Verified,
 } from "lucide-react";
 import React from "react";
 import RefreshHandler from "./RefreshHandler";
@@ -50,6 +51,7 @@ interface User {
   roomId: string | null;
   groupId: string | null;
   reportedToVenue?: boolean;
+  paymentVerified?: boolean;
 }
 
 interface UserCardProps {
@@ -62,6 +64,7 @@ interface UserCardProps {
   assignGroup: (userId: string, groupId: string) => Promise<void>;
   loadingUserId: string | null;
   toggleReported: (userId: string, reported: boolean) => void;
+  togglePayment : (userId: string, verified: boolean) => void;
 }
 
 interface UsersClientProps {
@@ -79,6 +82,7 @@ const UserCard = React.memo(function UserCard({
   assignGroup,
   loadingUserId,
   toggleReported,
+  togglePayment,
 }: UserCardProps) {
   return (
     <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 relative">
@@ -108,6 +112,12 @@ const UserCard = React.memo(function UserCard({
       {user.reportedToVenue && (
         <p className="text-xs mt-2 text-zinc-400">
           <b>Reported To Venue:</b> Yes
+        </p>
+      )}
+
+      {user.paymentVerified && (
+        <p className="text-xs mt-2 text-zinc-400">
+          <b>Payment Verified:</b> Yes
         </p>
       )}
 
@@ -152,7 +162,7 @@ const UserCard = React.memo(function UserCard({
       <Dialog>
         <DialogTrigger asChild>
           <button className="mt-4 w-full bg-zinc-800 hover:bg-zinc-700 text-sm py-2 rounded-md">
-            Assign Room / Group
+            Assign / Verify
           </button>
         </DialogTrigger>
 
@@ -196,6 +206,21 @@ const UserCard = React.memo(function UserCard({
               }`}
             >
               {user.reportedToVenue ? "Reported" : "Mark"}
+            </button>
+          </div>
+
+          <div className="mt-4 flex items-center justify-between border border-zinc-800 rounded-md px-3 py-2">
+            <span className="text-sm text-zinc-300">Payment Verification</span>
+
+            <button
+              onClick={() => togglePayment(user._id, !user.paymentVerified)}
+              className={`px-3 py-1 rounded-md text-xs transition ${
+                user.paymentVerified
+                  ? "bg-green-700 hover:bg-green-600 text-white"
+                  : "bg-zinc-800 hover:bg-zinc-700 text-zinc-300"
+              }`}
+            >
+              {user.paymentVerified ? "Verified" : "Not Verified"}
             </button>
           </div>
 
@@ -654,6 +679,41 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
     [],
   );
 
+  const togglePayment = useCallback(
+    async (userId: string, verified: boolean) => {
+      try {
+        const res = await fetch("/api/payment-verified", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ userId, verified }),
+        });
+
+        const data = await res.json();
+
+        if (!data.success) {
+          toast.error(data.error);
+          return;
+        }
+
+        // 🔥 optimistic UI update
+        setUsers((prev) =>
+          prev.map((u) =>
+            u._id === userId ? { ...u, paymentVerified: verified } : u,
+          ),
+        );
+
+        toast.success(verified ? "Marked as verified" : "Unverified");
+        // router.refresh();
+      } catch (err) {
+        console.error(err);
+        toast.error("Failed");
+      }
+    },
+    [],
+  );
+
   const processedUsers = useMemo(() => {
     const q = debouncedSearch.trim().toLowerCase();
 
@@ -669,37 +729,6 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
       );
     }
 
-    // 🔥 apply ALL selected filters
-    // if (modes.length > 0) {
-    //   result = result.filter((u) => {
-    //     return modes.some((mode) => {
-    //       switch (mode) {
-    //         case "unassigned-group":
-    //           return !u.groupId;
-    //         case "unassigned-room":
-    //           return !u.roomId;
-    //         case "assigned-both":
-    //           return u.roomId && u.groupId;
-    //         case "unassigned":
-    //           return !u.roomId && !u.groupId;
-    //         case "male":
-    //           return u.gender?.toLowerCase() === "male";
-    //         case "female":
-    //           return u.gender?.toLowerCase() === "female";
-    //         case "reported":
-    //           return u.reportedToVenue === true;
-    //         case "not-reported":
-    //           return !u.reportedToVenue;
-    //         case "age-range":
-    //           return (
-    //             u.age !== null && u.age >= ageRange[0] && u.age <= ageRange[1]
-    //           );
-    //         default:
-    //           return true;
-    //       }
-    //     });
-    //   });
-    // }
 
     if (modes.length > 0) {
       const genderModes = modes.filter((m) => m === "male" || m === "female");
@@ -973,6 +1002,7 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
               assignGroup={assignGroup}
               loadingUserId={loadingUserId}
               toggleReported={toggleReported}
+              togglePayment={togglePayment}
             />
           ))
         ) : (
