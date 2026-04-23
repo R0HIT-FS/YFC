@@ -36,6 +36,7 @@ import {
 import React from "react";
 import RefreshHandler from "./RefreshHandler";
 import SyncStatus from "./SyncStatus";
+import { Badge } from "@/components/ui/badge";
 
 interface User {
   _id: string;
@@ -52,6 +53,7 @@ interface User {
   groupId: string | null;
   reportedToVenue?: boolean;
   paymentVerified?: boolean;
+  duplicateCount?: number;
 }
 
 interface UserCardProps {
@@ -84,6 +86,7 @@ const UserCard = React.memo(function UserCard({
   toggleReported,
   togglePayment,
 }: UserCardProps) {
+  const isDuplicate = (user.duplicateCount ?? 0) > 0;
   return (
     <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 relative">
       {/* Avatar */}
@@ -91,8 +94,14 @@ const UserCard = React.memo(function UserCard({
         {user.name?.charAt(0)?.toUpperCase() || "U"}
       </div>
 
+      {isDuplicate && (
+        <Badge className="bg-yellow-50 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-300 mb-3">
+          {`${user?.duplicateCount} duplicates exist`}
+        </Badge>
+      )}
+
       <p className="font-medium">
-        {user.name}, <span className="text-zinc-400">{user.age || "N/A"}</span>
+        {user.name}, <span className="text-zinc-400">{user.age || "N/A"} </span>
       </p>
 
       <p className="text-sm text-zinc-400 mt-2">{user.churchName || "-"}</p>
@@ -714,6 +723,15 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
     [],
   );
 
+  const nameCounts: Record<string, number> = {};
+
+  for (const u of users) {
+    const key = u.name?.toLowerCase();
+    if (!key) continue;
+
+    nameCounts[key] = (nameCounts[key] || 0) + 1;
+  }
+
   const processedUsers = useMemo(() => {
     const q = debouncedSearch.trim().toLowerCase();
 
@@ -767,6 +785,9 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
                 return u.paymentVerified === true;
               case "payment-unverified":
                 return !u.paymentVerified;
+              case "duplicate":
+                const key = u.name?.toLowerCase();
+                return key ? nameCounts[key] > 1 : false;
               default:
                 return true;
             }
@@ -784,7 +805,23 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
       result = [...result].sort((a, b) => (a.age || 0) - (b.age || 0));
     }
 
-    return result;
+    if (modes.includes("duplicate")) {
+      result = [...result].sort((a, b) =>
+        (a.name || "")
+          .toLowerCase()
+          .localeCompare((b.name || "").toLowerCase()),
+      );
+    }
+
+    return result.map((u) => {
+      const key = u.name?.toLowerCase();
+      const count = key ? nameCounts[key] || 0 : 0;
+
+      return {
+        ...u,
+        duplicateCount: count > 0 ? count - 1 : 0,
+      };
+    });
   }, [users, debouncedSearch, modes, ageRange]);
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 p-10">
@@ -949,6 +986,19 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
               onCheckedChange={() => toggleMode("payment-unverified")}
             >
               Unverified
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel className="bg-zinc-700 rounded-lg">
+              Duplicates
+            </DropdownMenuLabel>
+            <DropdownMenuCheckboxItem
+              className="cursor-pointer hover:bg-zinc-800 data-[state=checked]:bg-zinc-800
+    data-[state=checked]:text-white"
+              checked={modes.includes("duplicate")}
+              onCheckedChange={() => toggleMode("duplicate")}
+            >
+              By Name
             </DropdownMenuCheckboxItem>
           </DropdownMenuContent>
         </DropdownMenu>
