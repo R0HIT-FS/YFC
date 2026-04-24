@@ -11,6 +11,7 @@ import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { RotateCw } from "lucide-react";
 
 interface User {
   _id: string;
@@ -282,7 +283,7 @@ export default function DragAssignPage() {
             <h2 className="mb-4">Users ({unassignedUsers.length})</h2>
 
             {/* SLIDER */}
-            <div className="mb-6 w-full max-w-md rounded-xl border border-zinc-800 bg-zinc-900 p-4">
+            <div className="mb-2 w-full max-w-md rounded-xl border border-zinc-800 bg-zinc-900 p-4">
               <div className="flex justify-between text-sm mb-2">
                 <span>Age Range</span>
                 <span>
@@ -318,6 +319,12 @@ export default function DragAssignPage() {
                 "
               />
             </div>
+            <button
+              onClick={() => setAgeRange([0, 100])}
+              className="mb-6 block w-fit flex gap-2 items-center justify-center text-[16px] bg-zinc-900 border border-zinc-800 px-3 py-2 rounded-md text-sm hover:bg-zinc-800 cursor-pointer"
+            >
+              Reset <RotateCw size={"18px"} />
+            </button>
 
             <div className="grid gap-3">
               {unassignedUsers.map((u) => (
@@ -370,6 +377,12 @@ export default function DragAssignPage() {
     "
                 />
               </div>
+              <button
+                onClick={() => setGroupAgeRange([0, 100])}
+                className="block w-fit flex gap-2 items-center justify-center text-[16px] bg-zinc-900 border border-zinc-800 px-3 py-2 rounded-md text-sm hover:bg-zinc-800 cursor-pointer"
+              >
+                Reset <RotateCw size={"18px"} />
+              </button>
             </div>
 
             <button
@@ -504,7 +517,7 @@ function GroupCard({
       className={`p-4 rounded-lg min-h-[150px] border transition-all duration-200 ${
         groupHasAgeMatch
           ? "bg-zinc-900 border-zinc-700"
-          : "bg-zinc-900 border-zinc-800 opacity-40"
+          : "bg-zinc-900 border-zinc-800 opacity-40 pointer-events-none"
       }`}
     >
       {/* <h3 className="font-semibold mb-2">
