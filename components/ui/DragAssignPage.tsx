@@ -41,6 +41,9 @@ export default function DragAssignPage() {
     0, 100,
   ]);
 
+  const inGroupAgeRange = (age: number) =>
+    age >= groupAgeRange[0] && age <= groupAgeRange[1];
+
   const toggleGroupSelection = (groupId: string) => {
     setSelectedGroupIds((prev) => {
       const next = new Set(prev);
@@ -167,17 +170,21 @@ export default function DragAssignPage() {
     )
     .sort((a, b) => (a.age || 0) - (b.age || 0));
 
-  const visibleGroups = groups
-    .filter((g) => g.name?.toLowerCase().includes(groupSearch.toLowerCase()))
-    .filter((group) => {
-      const groupUsers = users.filter((u) => assignments[u._id] === group._id);
+  // const visibleGroups = groups
+  //   .filter((g) => g.name?.toLowerCase().includes(groupSearch.toLowerCase()))
+  //   .filter((group) => {
+  //     const groupUsers = users.filter((u) => assignments[u._id] === group._id);
 
-      if (groupUsers.length === 0) return true;
+  //     if (groupUsers.length === 0) return true;
 
-      return groupUsers.some(
-        (u) => u.age >= groupAgeRange[0] && u.age <= groupAgeRange[1],
-      );
-    });
+  //     return groupUsers.some(
+  //       (u) => u.age >= groupAgeRange[0] && u.age <= groupAgeRange[1],
+  //     );
+  //   });
+
+  const visibleGroups = groups.filter((g) =>
+    g.name?.toLowerCase().includes(groupSearch.toLowerCase()),
+  );
 
   const handleAutoAssign = () => {
     const targetGroups = groups.filter((g) => selectedGroupIds.has(g._id));
@@ -392,6 +399,8 @@ export default function DragAssignPage() {
                   ageRange={ageRange}
                   isSelected={selectedGroupIds.has(g._id)}
                   onToggleSelect={toggleGroupSelection}
+                  inGroupAgeRange={inGroupAgeRange}
+                  groupAgeRange={groupAgeRange}
                 />
               ))}
             </div>
@@ -459,6 +468,8 @@ function GroupCard({
   ageRange,
   isSelected,
   onToggleSelect,
+  inGroupAgeRange,
+  groupAgeRange,
 }: {
   group: Group;
   users: User[];
@@ -467,7 +478,17 @@ function GroupCard({
   ageRange: [number, number];
   isSelected?: boolean;
   onToggleSelect: (groupId: string) => void;
+  inGroupAgeRange: any;
+  groupAgeRange: [number, number];
 }) {
+  const isFullRange = groupAgeRange[0] === 0 && groupAgeRange[1] === 100;
+
+  const groupHasAgeMatch = isFullRange
+    ? true
+    : users
+        .filter((u) => String(assignments[u._id]) === String(group._id))
+        .some((u) => u.age >= groupAgeRange[0] && u.age <= groupAgeRange[1]);
+
   const { setNodeRef } = useDroppable({
     id: String(group._id),
   });
@@ -479,7 +500,12 @@ function GroupCard({
   return (
     <div
       ref={setNodeRef}
-      className="bg-zinc-900 p-4 rounded-lg min-h-[150px] border border-zinc-700"
+      // className="bg-zinc-900 p-4 rounded-lg min-h-[150px] border border-zinc-700"
+      className={`p-4 rounded-lg min-h-[150px] border transition-all duration-200 ${
+        groupHasAgeMatch
+          ? "bg-zinc-900 border-zinc-700"
+          : "bg-zinc-900 border-zinc-800 opacity-40"
+      }`}
     >
       {/* <h3 className="font-semibold mb-2">
         {group.name} ({assignedUsers.length})
