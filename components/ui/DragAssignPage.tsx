@@ -5,6 +5,7 @@ import {
   closestCenter,
   useDraggable,
   useDroppable,
+  pointerWithin,
 } from "@dnd-kit/core";
 import { useEffect, useState } from "react";
 import { Slider } from "@/components/ui/slider";
@@ -261,7 +262,7 @@ export default function DragAssignPage() {
   };
 
   return (
-    <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+    <DndContext collisionDetection={pointerWithin} onDragEnd={handleDragEnd}>
       <div className="hidden md:block min-h-screen bg-zinc-950 text-white p-10">
         <h1 className="text-3xl font-semibold mb-6">Drag & Assign</h1>
 
@@ -504,7 +505,7 @@ function GroupCard({
         .filter((u) => String(assignments[u._id]) === String(group._id))
         .some((u) => u.age >= groupAgeRange[0] && u.age <= groupAgeRange[1]);
 
-  const { setNodeRef } = useDroppable({
+  const { setNodeRef, isOver } = useDroppable({
     id: String(group._id),
   });
 
@@ -517,9 +518,11 @@ function GroupCard({
       ref={setNodeRef}
       // className="bg-zinc-900 p-4 rounded-lg min-h-[150px] border border-zinc-700"
       className={`p-4 rounded-lg min-h-[150px] border transition-all duration-200 ${
-        groupHasAgeMatch
-          ? "bg-zinc-900 border-zinc-700"
-          : "bg-zinc-900 border-zinc-800 opacity-40 pointer-events-none"
+        isOver
+          ? "border-green-400"
+          : groupHasAgeMatch
+            ? "bg-zinc-900 border-zinc-700"
+            : "bg-zinc-900 border-zinc-800 opacity-40 pointer-events-none"
       }`}
     >
       {/* <h3 className="font-semibold mb-2">
