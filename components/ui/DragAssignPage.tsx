@@ -171,21 +171,23 @@ export default function DragAssignPage() {
     )
     .sort((a, b) => (a.age || 0) - (b.age || 0));
 
-  // const visibleGroups = groups
-  //   .filter((g) => g.name?.toLowerCase().includes(groupSearch.toLowerCase()))
-  //   .filter((group) => {
-  //     const groupUsers = users.filter((u) => assignments[u._id] === group._id);
+  const isGroupActive = (group: Group) => {
+    const groupUsers = users.filter((u) => assignments[u._id] === group._id);
 
-  //     if (groupUsers.length === 0) return true;
+    if (groupAgeRange[0] === 0 && groupAgeRange[1] === 100) return true;
 
-  //     return groupUsers.some(
-  //       (u) => u.age >= groupAgeRange[0] && u.age <= groupAgeRange[1],
-  //     );
-  //   });
+    return groupUsers.some(
+      (u) => u.age >= groupAgeRange[0] && u.age <= groupAgeRange[1],
+    );
+  };
 
-  const visibleGroups = groups.filter((g) =>
-    g.name?.toLowerCase().includes(groupSearch.toLowerCase()),
-  );
+  // const visibleGroups = groups.filter((g) =>
+  //   g.name?.toLowerCase().includes(groupSearch.toLowerCase()),
+  // );
+
+  const visibleGroups = groups
+    .filter((g) => g.name?.toLowerCase().includes(groupSearch.toLowerCase()))
+    .sort((a, b) => Number(isGroupActive(b)) - Number(isGroupActive(a)));
 
   const handleAutoAssign = () => {
     const targetGroups = groups.filter((g) => selectedGroupIds.has(g._id));
