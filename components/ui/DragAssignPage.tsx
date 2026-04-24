@@ -8,7 +8,7 @@ import {
 } from "@dnd-kit/core";
 import { useEffect, useState } from "react";
 import { Slider } from "@/components/ui/slider";
-import { Badge } from "@/components/ui/badge"
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
@@ -34,6 +34,26 @@ export default function DragAssignPage() {
   const [removedUsers, setRemovedUsers] = useState<Set<string>>(new Set());
   const [ageRange, setAgeRange] = useState<[number, number]>([0, 100]);
   const [groupSearch, setGroupSearch] = useState("");
+  const [selectedGroupIds, setSelectedGroupIds] = useState<Set<string>>(
+    new Set(),
+  );
+  const [groupAgeRange, setGroupAgeRange] = useState<[number, number]>([
+    0, 100,
+  ]);
+
+  const toggleGroupSelection = (groupId: string) => {
+    setSelectedGroupIds((prev) => {
+      const next = new Set(prev);
+
+      if (next.has(groupId)) {
+        next.delete(groupId);
+      } else {
+        next.add(groupId);
+      }
+
+      return next;
+    });
+  };
 
   const router = useRouter();
 
@@ -134,8 +154,8 @@ export default function DragAssignPage() {
 
     if (data.success) {
       toast.success("Assignments saved successfully!");
-    //   window.location.reload();
-    router.refresh();
+      //   window.location.reload();
+      router.refresh();
     }
   };
 
@@ -147,9 +167,88 @@ export default function DragAssignPage() {
     )
     .sort((a, b) => (a.age || 0) - (b.age || 0));
 
-  const filteredGroups = groups.filter((g) =>
-    g.name?.toLowerCase().includes(groupSearch.toLowerCase()),
-  );
+  const visibleGroups = groups
+    .filter((g) => g.name?.toLowerCase().includes(groupSearch.toLowerCase()))
+    .filter((group) => {
+      const groupUsers = users.filter((u) => assignments[u._id] === group._id);
+
+      if (groupUsers.length === 0) return true;
+
+      return groupUsers.some(
+        (u) => u.age >= groupAgeRange[0] && u.age <= groupAgeRange[1],
+      );
+    });
+
+  const handleAutoAssign = () => {
+    const targetGroups = groups.filter((g) => selectedGroupIds.has(g._id));
+
+    if (!targetGroups.length) {
+      toast.error("Please select at least one group");
+      return;
+    }
+
+    const nextAssignments = { ...assignments };
+
+    const churchesByGroup: Record<string, Set<string>> = {};
+    const groupCounts: Record<string, number> = {};
+
+    targetGroups.forEach((group) => {
+      churchesByGroup[group._id] = new Set();
+      groupCounts[group._id] = 0;
+    });
+
+    // Seed with existing assignments
+    users.forEach((user) => {
+      const assignedGroupId = nextAssignments[user._id];
+
+      if (assignedGroupId && churchesByGroup[assignedGroupId]) {
+        churchesByGroup[assignedGroupId].add(user.churchName);
+        groupCounts[assignedGroupId] += 1;
+      }
+    });
+
+    // Only assign currently unassigned users in selected age range
+    const eligibleUsers = users
+      .filter(
+        (u) =>
+          !nextAssignments[u._id] &&
+          u.age >= ageRange[0] &&
+          u.age <= ageRange[1],
+      )
+      .sort((a, b) => a.age - b.age);
+
+    for (const user of eligibleUsers) {
+      // Prefer groups without the same church, sorted by smallest size
+      const sortedGroups = [...targetGroups].sort(
+        (a, b) => groupCounts[a._id] - groupCounts[b._id],
+      );
+
+      let selectedGroup = sortedGroups.find(
+        (group) => !churchesByGroup[group._id].has(user.churchName),
+      );
+
+      // If every group already has that church, assign to smallest group
+      if (!selectedGroup) {
+        selectedGroup = sortedGroups[0];
+      }
+
+      nextAssignments[user._id] = selectedGroup._id;
+      churchesByGroup[selectedGroup._id].add(user.churchName);
+      groupCounts[selectedGroup._id] += 1;
+    }
+
+    setAssignments(nextAssignments);
+    toast.success("Users auto-assigned successfully!");
+    // setGroupView('all');
+  };
+
+  const selectAllFilteredGroups = () => {
+    setSelectedGroupIds(new Set(visibleGroups.map((g) => g._id)));
+  };
+
+  const clearSelectedGroups = () => {
+    setSelectedGroupIds(new Set());
+  };
 
   return (
     <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
@@ -158,9 +257,16 @@ export default function DragAssignPage() {
 
         <button
           onClick={handleSave}
-          className="mb-6 bg-green-600 px-4 py-2 rounded cursor-pointer hover:bg-green-700"
+          className="mb-6 bg-white text-black px-4 py-2 rounded cursor-pointer hover:bg-zinc-100"
         >
           Save Assignments
+        </button>
+
+        <button
+          onClick={handleAutoAssign}
+          className="ml-3 mb-6 mr-3 bg-zinc-600 px-4 py-2 rounded cursor-pointer hover:bg-zinc-700"
+        >
+          Auto Assign
         </button>
 
         <div className="grid grid-cols-2 gap-10">
@@ -215,7 +321,7 @@ export default function DragAssignPage() {
 
           {/* GROUPS */}
           <div>
-            <h2 className="mb-4">Groups ({filteredGroups.length})</h2>
+            <h2 className="mb-4">Groups ({visibleGroups.length})</h2>
 
             <input
               type="text"
@@ -225,8 +331,58 @@ export default function DragAssignPage() {
               className="mb-4 w-full max-w-md bg-zinc-900 border border-zinc-800 px-3 py-2 rounded-md text-sm focus:outline-none"
             />
 
+            <div className="flex items-start justify-start gap-2">
+              <div className="mb-6 w-full max-w-md rounded-xl border border-zinc-800 bg-zinc-900 p-4">
+                <div className="flex justify-between text-sm mb-2">
+                  <span>Group Age Filter</span>
+                  <span>
+                    {groupAgeRange[0]} - {groupAgeRange[1]}
+                  </span>
+                </div>
+
+                <Slider
+                  value={groupAgeRange}
+                  min={0}
+                  max={100}
+                  step={1}
+                  onValueChange={(value) =>
+                    setGroupAgeRange(value as [number, number])
+                  }
+                  className="
+      [&>.relative]:h-1
+      [&>.relative]:bg-zinc-700
+      [&>.relative]:rounded-full
+      [&>.relative>span]:bg-white
+      [&>.relative>span]:rounded-full
+      [&_[role=slider]]:h-3
+      [&_[role=slider]]:w-3
+      [&_[role=slider]]:bg-white
+      [&_[role=slider]]:border
+      [&_[role=slider]]:border-zinc-900
+      [&_[role=slider]]:rounded-full
+    "
+                />
+              </div>
+            </div>
+
+            <button
+              className="px-2 py-1 rounded-xl bg-zinc-500 text-white text-xs mr-3 mb-3 cursor-pointer hover:bg-zinc-600"
+              onClick={() =>
+                setSelectedGroupIds(new Set(visibleGroups.map((g) => g._id)))
+              }
+            >
+              Select Visible
+            </button>
+
+            <button
+              className="px-2 py-1 rounded-xl bg-zinc-600 text-white text-xs mr-3 mb-3 cursor-pointer hover:bg-zinc-500"
+              onClick={() => setSelectedGroupIds(new Set())}
+            >
+              Clear Selection
+            </button>
+
             <div className="grid gap-4">
-              {filteredGroups.map((g) => (
+              {visibleGroups.map((g) => (
                 <GroupCard
                   key={g._id}
                   group={g}
@@ -234,13 +390,13 @@ export default function DragAssignPage() {
                   assignments={assignments}
                   removeUser={removeUser}
                   ageRange={ageRange}
+                  isSelected={selectedGroupIds.has(g._id)}
+                  onToggleSelect={toggleGroupSelection}
                 />
               ))}
             </div>
           </div>
         </div>
-
-
       </div>
     </DndContext>
   );
@@ -266,18 +422,29 @@ function UserCard({ user }: { user: User }) {
       style={style}
       className="bg-zinc-900 p-3 rounded cursor-grab border border-zinc-700"
     >
-      <p className="font-medium">{user.name}, <span className="text-zinc-300">{user.age}</span></p>
+      <p className="font-medium">
+        {user.name}, <span className="text-zinc-300">{user.age}</span>
+      </p>
       <p className="text-xs text-zinc-400">
-        {user.churchName} {user.reportedToVenue ? <Badge className="ml-2 bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300">
+        {user.churchName}{" "}
+        {user.reportedToVenue ? (
+          <Badge className="ml-2 bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300">
             Reported
-      </Badge> :  <Badge className="ml-2 bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300">
-        Not Reported
-      </Badge>}
-      {user.paymentVerified ? <Badge className="ml-2 bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300">
+          </Badge>
+        ) : (
+          <Badge className="ml-2 bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300">
+            Not Reported
+          </Badge>
+        )}
+        {user.paymentVerified ? (
+          <Badge className="ml-2 bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300">
             Verified
-      </Badge> :    <Badge className="ml-2 bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300">
-        Not Verified
-      </Badge>}
+          </Badge>
+        ) : (
+          <Badge className="ml-2 bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300">
+            Not Verified
+          </Badge>
+        )}
       </p>
     </div>
   );
@@ -290,12 +457,16 @@ function GroupCard({
   assignments,
   removeUser,
   ageRange,
+  isSelected,
+  onToggleSelect,
 }: {
   group: Group;
   users: User[];
   assignments: Record<string, string>;
   removeUser: (userId: string) => void;
   ageRange: [number, number];
+  isSelected?: boolean;
+  onToggleSelect: (groupId: string) => void;
 }) {
   const { setNodeRef } = useDroppable({
     id: String(group._id),
@@ -310,9 +481,21 @@ function GroupCard({
       ref={setNodeRef}
       className="bg-zinc-900 p-4 rounded-lg min-h-[150px] border border-zinc-700"
     >
-      <h3 className="font-semibold mb-2">
+      {/* <h3 className="font-semibold mb-2">
         {group.name} ({assignedUsers.length})
-      </h3>
+      </h3> */}
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="font-semibold">
+          {group.name} ({assignedUsers.length})
+        </h3>
+
+        <input
+          type="checkbox"
+          checked={isSelected}
+          onChange={() => onToggleSelect(group._id)}
+          className="h-4 w-4 accent-green-300"
+        />
+      </div>
 
       {assignedUsers.length === 0 && (
         <p className="text-xs text-zinc-500">Drop users here</p>
@@ -331,7 +514,7 @@ function GroupCard({
             }`}
           >
             <span>
-              {u.name} ({u.age})
+              {u.name} ({u.age}) - {u.churchName}
             </span>
 
             <button
