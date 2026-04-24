@@ -73,6 +73,7 @@ import GroupCard from "../../../components/GroupCard";
 import CreateGroup from "@/components/CreateGroup";
 import RefreshHandler from "@/components/RefreshHandler";
 import ExportPDFButton from "@/components/ExportPdfButton";
+import ExportPPTButton from "@/components/ui/ExportPPTButton";
 
 interface User {
   _id: string;
@@ -143,8 +144,9 @@ export default async function GroupsPage() {
 
       <h2 className="text-3xl font-semibold mb-8 mt-10">Groups</h2>
 
-      <div className="flex items-center justify-between mb-8 mt-10">
+      <div className="flex items-center justify-start gap-2 mb-8 mt-10">
         <ExportPDFButton groups={groups} usersByGroup={usersByGroup} />
+        <ExportPPTButton groups={groups} usersByGroup={usersByGroup} />
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
