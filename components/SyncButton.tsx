@@ -349,7 +349,7 @@ export default function SyncButton() {
         <button
           className="w-full sm:max-w-md text-white bg-slate-600 hover:bg-slate-500 rounded-md text-sm cursor-pointer"
         >
-          <a href="/export" className=" block py-2 px-4">Export Excel</a>
+          <a href="/export" target="_blank" className=" block py-2 px-4">Export Excel</a>
           
         </button>
 

@@ -74,6 +74,7 @@ import CreateGroup from "@/components/CreateGroup";
 import RefreshHandler from "@/components/RefreshHandler";
 import ExportPDFButton from "@/components/ExportPdfButton";
 import ExportPPTButton from "@/components/ui/ExportPPTButton";
+import { SquareArrowOutUpRight } from "lucide-react";
 
 interface User {
   _id: string;
@@ -144,9 +145,12 @@ export default async function GroupsPage() {
 
       <h2 className="text-3xl font-semibold mb-8 mt-10">Groups</h2>
 
-      <div className="flex items-center justify-start gap-2 mb-8 mt-10">
+      <div className="flex flex-wrap items-start sm:flex-row sm:items-center justify-start gap-2 mb-8 mt-10">
         <ExportPDFButton groups={groups} usersByGroup={usersByGroup} />
         <ExportPPTButton groups={groups} usersByGroup={usersByGroup} />
+        <a href="/drag-assign" target="_blank"><button className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-zinc-800 hover:bg-zinc-700 text-zinc-100 text-sm font-medium transition-colors cursor-pointer">
+          Auto Assign  <SquareArrowOutUpRight size={'16px'} />
+        </button></a>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
