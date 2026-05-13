@@ -19,6 +19,7 @@ interface User {
   name: string;
   age: number;
   churchName: string;
+  other: string;
   groupId?: string | null;
   reportedToVenue?: boolean;
   paymentVerified?: boolean;
@@ -28,6 +29,20 @@ interface Group {
   _id: string;
   name: string;
 }
+
+const getChurchValue = (user: {
+  churchName?: string;
+  other?: string;
+}) => {
+  if (
+    user.churchName &&
+    user.churchName.trim().toLowerCase() !== "other"
+  ) {
+    return user.churchName.trim();
+  }
+
+  return user.other?.trim() || "";
+};
 
 export default function DragAssignPage() {
   const [users, setUsers] = useState<User[]>([]);
@@ -196,7 +211,7 @@ export default function DragAssignPage() {
     if (!targetGroups.length) {
       toast.error("Please select at least one group");
       return;
-    }
+    } 
 
     const nextAssignments = { ...assignments };
 
@@ -213,7 +228,7 @@ export default function DragAssignPage() {
       const assignedGroupId = nextAssignments[user._id];
 
       if (assignedGroupId && churchesByGroup[assignedGroupId]) {
-        churchesByGroup[assignedGroupId].add(user.churchName);
+        churchesByGroup[assignedGroupId].add(getChurchValue(user));
         groupCounts[assignedGroupId] += 1;
       }
     });
@@ -235,7 +250,7 @@ export default function DragAssignPage() {
       );
 
       let selectedGroup = sortedGroups.find(
-        (group) => !churchesByGroup[group._id].has(user.churchName),
+        (group) => !churchesByGroup[group._id].has(getChurchValue(user)),
       );
 
       // If every group already has that church, assign to smallest group
@@ -243,8 +258,10 @@ export default function DragAssignPage() {
         selectedGroup = sortedGroups[0];
       }
 
+      const churchValue = getChurchValue(user);
+
       nextAssignments[user._id] = selectedGroup._id;
-      churchesByGroup[selectedGroup._id].add(user.churchName);
+      churchesByGroup[selectedGroup._id].add(churchValue);
       groupCounts[selectedGroup._id] += 1;
     }
 
@@ -451,7 +468,7 @@ function UserCard({ user }: { user: User }) {
         {user.name}, <span className="text-zinc-300">{user.age}</span>
       </p>
       <p className="text-xs text-zinc-400">
-        {user.churchName}{" "}
+        {getChurchValue(user)}{" "}
         {user.reportedToVenue ? (
           <Badge className="ml-2 bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300">
             Reported
@@ -558,7 +575,7 @@ function GroupCard({
             }`}
           >
             <span>
-              {u.name} ({u.age}) - {u.churchName}
+              {u.name} ({u.age}) - {getChurchValue(u)}
             </span>
 
             <button
