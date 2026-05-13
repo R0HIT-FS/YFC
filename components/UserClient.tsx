@@ -43,9 +43,11 @@ interface User {
   name: string;
   age: number | null;
   email: string;
+  uniqueId: string;
   gender: string;
   phone?: string | number;
   churchName: string;
+  other: string;
   paymentStatus?: string | number;
   transactionId?: string | number;
   paymentDate?: string | number;
@@ -104,7 +106,11 @@ const UserCard = React.memo(function UserCard({
         {user.name}, <span className="text-zinc-400">{user.age || "N/A"} </span>
       </p>
 
-      <p className="text-sm text-zinc-400 mt-2">{user.churchName || "-"}</p>
+      <p className="text-sm text-zinc-400 mt-2">
+        {user.churchName && user.churchName.trim().toLowerCase() !== "other"
+          ? user.churchName
+          : user.other?.trim()}
+      </p>
 
       {user.roomId && rooms[user.roomId] && (
         <p className="text-xs mt-3 text-zinc-400">
@@ -268,10 +274,21 @@ const UserCard = React.memo(function UserCard({
                 {[
                   { label: "Name", value: user.name },
                   { label: "Email", value: user.email },
+                  {
+                    label: "Unique ID",
+                    value: `SOS - ${user?.uniqueId?.trim()}`,
+                  },
                   { label: "Age", value: user.age },
                   { label: "Gender", value: user.gender },
                   { label: "Phone", value: user.phone },
-                  { label: "Church", value: user.churchName },
+                  {
+                    label: "Church",
+                    value:
+                      user.churchName &&
+                      user.churchName.trim().toLowerCase() !== "other"
+                        ? user.churchName
+                        : user.other || null,
+                  },
                 ].map(({ label, value }) => {
                   const isPhone = label === "Phone";
                   return (

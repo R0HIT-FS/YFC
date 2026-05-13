@@ -1,10 +1,7 @@
 import crypto from "crypto";
 
 export function generateHash(obj) {
-  return crypto
-    .createHash("md5")
-    .update(JSON.stringify(obj))
-    .digest("hex");
+  return crypto.createHash("md5").update(JSON.stringify(obj)).digest("hex");
 }
 
 export function transformUsers(rawData) {
@@ -16,12 +13,11 @@ export function transformUsers(rawData) {
       if (!email) return null;
 
       const user = {
-        name:
-          item["Name:"]?.trim() ||
-          item["Name"]?.trim() ||
-          "No Name",
+        name: item["Name:"]?.trim() || item["Name"]?.trim() || "No Name",
 
         email,
+
+        uniqueId: item["Case No"]?.trim() || null,
 
         age: item["Age:"]
           ? Number(item["Age:"])
@@ -32,11 +28,12 @@ export function transformUsers(rawData) {
         gender: item["Gender"]?.trim() || null,
 
         phone:
-          item["Phone Number:"]?.trim() ||
-          item["Phone Number"]?.trim() ||
-          null,
+          item["Phone Number:"]?.trim() || item["Phone Number"]?.trim() || null,
 
-        churchName: item["College / Church"]?.trim() || null,
+        churchName:
+          item["Church"]?.trim() || null,
+
+        other : item["Only if OTHER (Church name missing above ) please mention your church name with area."]?.trim() || null,
         locality: item["Area/Locality of residence"]?.trim() || null,
 
         transport:
@@ -44,11 +41,14 @@ export function transformUsers(rawData) {
             "Transport options (Buses will be arranged from BHEL & Secunderabad)"
           ]?.trim() || null,
 
-        paymentStatus: item["Registration Amount paid"]?.trim() || null,
-        paymentDate: item["Date of payment"]?.trim() || null,
+        paymentStatus:
+          item[
+            `Registration Amount paid 
+* Your registration is confirmed only if the amount is paid.`
+          ]?.trim() || null,
+        paymentDate: item["Date of payment (If paid)"]?.trim() || null,
 
-        transactionId:
-          item["Last 4 digits of Transaction ID"]?.trim() || null,
+        transactionId: item["Last 4 digits of Transaction ID (If paid)"]?.trim() || null,
 
         consentGiven:
           item[
