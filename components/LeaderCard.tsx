@@ -127,7 +127,7 @@ export default function LeaderCard({
                               return (
                                 <div
                                   key={label}
-                                  className="flex justify-between px-4 py-2 text-sm"
+                                  className="flex justify-between gap-[20px] px-4 py-2 text-sm"
                                 >
                                   <span className="text-zinc-400">{label}</span>
                                   {isPhone ? (
