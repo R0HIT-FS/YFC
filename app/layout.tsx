@@ -1,17 +1,34 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+// import { Geist, Geist_Mono } from "next/font/google";
+import { Google_Sans, Google_Sans_Flex, Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner"
 import Navbar from "@/components/Navbar";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const fallbackOne = Geist({
+  variable : "--font-fallback-one",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
+const fallbackTwo = Geist_Mono({
+  variable : "--font-fallback-two",
+  subsets: ["latin"],
+});
+
+
+
+const geistSans = Google_Sans({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+  fallback: ["Geist", "sans-serif"],
+  adjustFontFallback: false,
+});
+
+const geistMono = Google_Sans_Flex({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  fallback: ["Geist Mono", "monospace"],
+  adjustFontFallback: false,
 });
 
 export const metadata: Metadata = {
@@ -30,7 +47,7 @@ export default function RootLayout({
       className={` h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className={`${geistSans.variable} ${geistMono.variable} min-h-full flex flex-col bg-black`} suppressHydrationWarning>
+      <body className={`${geistSans.variable} ${geistMono.variable} ${fallbackOne.variable} ${fallbackTwo.variable} min-h-full flex flex-col bg-black`} suppressHydrationWarning>
         {children}
       <Toaster/>
       </body>
