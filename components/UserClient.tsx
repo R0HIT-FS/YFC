@@ -760,6 +760,7 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
         (u) =>
           u.name?.toLowerCase().includes(q) ||
           u.churchName?.toLowerCase().includes(q) ||
+          u.other?.toLowerCase().includes(q) ||
           u.age?.toString().includes(q),
       );
     }
