@@ -12,12 +12,13 @@ import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { RotateCw } from "lucide-react";
+import { ChevronDown, RotateCw } from "lucide-react";
 
 interface User {
   _id: string;
   name: string;
   age: number;
+  gender: string;
   churchName: string;
   other: string;
   groupId?: string | null;
@@ -30,14 +31,8 @@ interface Group {
   name: string;
 }
 
-const getChurchValue = (user: {
-  churchName?: string;
-  other?: string;
-}) => {
-  if (
-    user.churchName &&
-    user.churchName.trim().toLowerCase() !== "other"
-  ) {
+const getChurchValue = (user: { churchName?: string; other?: string }) => {
+  if (user.churchName && user.churchName.trim().toLowerCase() !== "other") {
     return user.churchName.trim();
   }
 
@@ -57,6 +52,9 @@ export default function DragAssignPage() {
   const [groupAgeRange, setGroupAgeRange] = useState<[number, number]>([
     0, 100,
   ]);
+  const [delegateFilter, setDelegateFilter] = useState<
+    "all" | "verified" | "unverified" | "reported" | "unreported"
+  >("all");
 
   const inGroupAgeRange = (age: number) =>
     age >= groupAgeRange[0] && age <= groupAgeRange[1];
@@ -180,11 +178,36 @@ export default function DragAssignPage() {
   };
 
   // ✅ USERS PANEL (FILTERED)
+  // const unassignedUsers = users
+  //   .filter(
+  //     (u) =>
+  //       !assignments[u._id] && u.age >= ageRange[0] && u.age <= ageRange[1],
+  //   )
+  //   .sort((a, b) => (a.age || 0) - (b.age || 0));
+
   const unassignedUsers = users
     .filter(
       (u) =>
         !assignments[u._id] && u.age >= ageRange[0] && u.age <= ageRange[1],
     )
+    .filter((u) => {
+      switch (delegateFilter) {
+        case "verified":
+          return u.paymentVerified;
+
+        case "unverified":
+          return !u.paymentVerified;
+
+        case "reported":
+          return u.reportedToVenue;
+
+        case "unreported":
+          return !u.reportedToVenue;
+
+        default:
+          return true;
+      }
+    })
     .sort((a, b) => (a.age || 0) - (b.age || 0));
 
   const isGroupActive = (group: Group) => {
@@ -211,7 +234,7 @@ export default function DragAssignPage() {
     if (!targetGroups.length) {
       toast.error("Please select at least one group");
       return;
-    } 
+    }
 
     const nextAssignments = { ...assignments };
 
@@ -300,17 +323,84 @@ export default function DragAssignPage() {
         <div className="grid grid-cols-2 gap-10">
           {/* USERS */}
           <div>
-            <h2 className="mb-4">Users ({unassignedUsers.length})</h2>
+            <h2 className="mb-4">Delegates ({unassignedUsers.length})</h2>
+
+            {/*Dropdown*/}
+            <div className="mb-4">
+              <label className="block text-sm text-zinc-300 mb-1">
+                Delegate Filter
+              </label>
+
+              <div className="relative w-fit">
+                <select
+                  value={delegateFilter}
+                  onChange={(e) =>
+                    setDelegateFilter(
+                      e.target.value as
+                        | "all"
+                        | "verified"
+                        | "unverified"
+                        | "reported"
+                        | "unreported",
+                    )
+                  }
+                  className="appearance-none bg-zinc-900 border border-zinc-800 px-3 py-2 pr-10 rounded-md text-sm focus:outline-none cursor-pointer"
+                >
+                  <option value="all">All Delegates</option>
+                  {/* <option value="verified">Verified</option> */}
+                  {/* <option value="unverified">Unverified</option> */}
+                  <option value="reported">Reported</option>
+                  <option value="unreported">Unreported</option>
+                </select>
+
+                <ChevronDown
+                  size={16}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400"
+                />
+              </div>
+            </div>
 
             {/* SLIDER */}
             <div className="mb-2 w-full max-w-md rounded-xl border border-zinc-800 bg-zinc-900 p-4">
-              <div className="flex justify-between text-sm mb-2">
+              <div className="flex justify-between text-sm mb-3">
                 <span>Age Range</span>
                 <span>
                   {ageRange[0]} - {ageRange[1]}
                 </span>
               </div>
 
+              {/* INPUTS */}
+              <div className="flex items-center gap-2 mb-4">
+                <input
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={ageRange[0]}
+                  onChange={(e) => {
+                    const value = Number(e.target.value);
+
+                    setAgeRange([value, ageRange[1]]);
+                  }}
+                  className="w-20 bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-sm"
+                />
+
+                <span className="text-zinc-400">to</span>
+
+                <input
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={ageRange[1]}
+                  onChange={(e) => {
+                    const value = Number(e.target.value);
+
+                    setAgeRange([ageRange[0], value]);
+                  }}
+                  className="w-20 bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-sm"
+                />
+              </div>
+
+              {/* SLIDER */}
               <Slider
                 value={ageRange}
                 min={0}
@@ -320,23 +410,19 @@ export default function DragAssignPage() {
                   setAgeRange(value as [number, number])
                 }
                 className="
-                [&>.relative]:h-1
-    [&>.relative]:bg-zinc-700
-    [&>.relative]:rounded-full
-
-    /* Range (active part) */
-    [&>.relative>span]:bg-white
-    [&>.relative>span]:rounded-full
-
-    /* Thumb */
-    [&_[role=slider]]:h-3
-    [&_[role=slider]]:w-3
-    [&_[role=slider]]:bg-white
-    [&_[role=slider]]:border
-    [&_[role=slider]]:border-zinc-900
-    [&_[role=slider]]:rounded-full
-    [&_[role=slider]]:shadow-sm
-                "
+      [&>.relative]:h-1
+      [&>.relative]:bg-zinc-700
+      [&>.relative]:rounded-full
+      [&>.relative>span]:bg-white
+      [&>.relative>span]:rounded-full
+      [&_[role=slider]]:h-3
+      [&_[role=slider]]:w-3
+      [&_[role=slider]]:bg-white
+      [&_[role=slider]]:border
+      [&_[role=slider]]:border-zinc-900
+      [&_[role=slider]]:rounded-full
+      [&_[role=slider]]:shadow-sm
+    "
               />
             </div>
             <button
@@ -366,14 +452,46 @@ export default function DragAssignPage() {
             />
 
             <div className="flex items-start justify-start gap-2">
-              <div className="mb-6 w-full max-w-md rounded-xl border border-zinc-800 bg-zinc-900 p-4">
-                <div className="flex justify-between text-sm mb-2">
-                  <span>Group Age Filter</span>
+              <div className="mb-2 w-full max-w-md rounded-xl border border-zinc-800 bg-zinc-900 p-4">
+                <div className="flex justify-between text-sm mb-3">
+                  <span>Group Age Range</span>
                   <span>
                     {groupAgeRange[0]} - {groupAgeRange[1]}
                   </span>
                 </div>
 
+                {/* INPUTS */}
+                <div className="flex items-center gap-2 mb-4">
+                  <input
+                    type="number"
+                    min={0}
+                    max={100}
+                    value={groupAgeRange[0]}
+                    onChange={(e) => {
+                      const value = Number(e.target.value);
+
+                      setGroupAgeRange([value, groupAgeRange[1]]);
+                    }}
+                    className="w-20 bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-sm"
+                  />
+
+                  <span className="text-zinc-400">to</span>
+
+                  <input
+                    type="number"
+                    min={0}
+                    max={100}
+                    value={groupAgeRange[1]}
+                    onChange={(e) => {
+                      const value = Number(e.target.value);
+
+                      setGroupAgeRange([groupAgeRange[0], value]);
+                    }}
+                    className="w-20 bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-sm"
+                  />
+                </div>
+
+                {/* SLIDER */}
                 <Slider
                   value={groupAgeRange}
                   min={0}
@@ -394,6 +512,7 @@ export default function DragAssignPage() {
       [&_[role=slider]]:border
       [&_[role=slider]]:border-zinc-900
       [&_[role=slider]]:rounded-full
+      [&_[role=slider]]:shadow-sm
     "
                 />
               </div>
@@ -465,7 +584,10 @@ function UserCard({ user }: { user: User }) {
       className="bg-zinc-900 p-3 rounded cursor-grab border border-zinc-700"
     >
       <p className="font-medium">
-        {user.name}, <span className="text-zinc-300">{user.age}</span>
+        {user.name},{" "}
+        <span className="text-zinc-300">
+          {user.age} ({user.gender.toLowerCase() === "male" ? "M" : "F"})
+        </span>
       </p>
       <p className="text-xs text-zinc-400">
         {getChurchValue(user)}{" "}
@@ -575,7 +697,9 @@ function GroupCard({
             }`}
           >
             <span>
-              {u.name} ({u.age}) - {getChurchValue(u)}
+              {u.name} ({u.age}) (
+              {u.gender.toLowerCase() === "male" ? "M" : "F"}) -{" "}
+              {getChurchValue(u)}
             </span>
 
             <button
