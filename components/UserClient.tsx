@@ -95,7 +95,7 @@ const UserCard = React.memo(function UserCard({
   return (
     <div className={`border border-zinc-800 rounded-xl p-5 relative bg-green-400 ${
       greenCard
-        ? "bg-green-400"
+        ? "bg-green-200"
         : yellowCard
         ? "bg-yellow-300"
         : "bg-zinc-900"
