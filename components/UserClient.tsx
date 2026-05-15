@@ -89,8 +89,17 @@ const UserCard = React.memo(function UserCard({
   togglePayment,
 }: UserCardProps) {
   const isDuplicate = (user.duplicateCount ?? 0) > 0;
+
+  const yellowCard = user.paymentVerified === true;
+  const greenCard = yellowCard && user.reportedToVenue === true;
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 relative">
+    <div className={`border border-zinc-800 rounded-xl p-5 relative bg-green-400 ${
+      greenCard
+        ? "bg-green-400"
+        : yellowCard
+        ? "bg-yellow-300"
+        : "bg-zinc-900"
+    }`}>
       {/* Avatar */}
       <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center mb-3">
         {user.name?.charAt(0)?.toUpperCase() || "U"}
@@ -102,77 +111,39 @@ const UserCard = React.memo(function UserCard({
         </Badge>
       )}
 
-      <p className="font-medium">
-        {user.name}, <span className="text-zinc-400">{user.age || "N/A"} </span>
+      <p className={`font-medium ${(yellowCard || greenCard) ? 'text-zinc-900' : 'text-white' }`}>
+        {user.name}, <span className={`${(yellowCard || greenCard) ? 'text-zinc-900' : 'text-zinc-400' }`}>{user.age || "N/A"} </span>
       </p>
 
-      <p className="text-sm text-zinc-400 mt-2">
+      <p className={`text-sm mt-2 ${(yellowCard || greenCard) ? 'text-zinc-800' : 'text-zinc-400' }`}>
         {user.churchName && user.churchName.trim().toLowerCase() !== "other"
           ? user.churchName
           : user.other?.trim()}
       </p>
 
       {user.roomId && rooms[user.roomId] && (
-        <p className="text-xs mt-3 text-zinc-400">
+        <p className={`text-xs mt-3 ${(yellowCard || greenCard) ? 'text-zinc-800' : 'text-zinc-400' }`}>
           <b>Room:</b> {rooms[user.roomId]}
         </p>
       )}
 
       {user.groupId && groups[user.groupId] && (
-        <p className="text-xs mt-2 text-zinc-400">
+        <p className={`text-xs mt-2 ${(yellowCard || greenCard) ? 'text-zinc-800' : 'text-zinc-400' }`}>
           <b>Group:</b> {groups[user.groupId]}
         </p>
       )}
 
       {user.reportedToVenue && (
-        <p className="text-xs mt-2 text-zinc-400">
+        <p className={`text-xs mt-2 ${(yellowCard || greenCard) ? 'text-zinc-800' : 'text-zinc-400' }`}>
           <b>Reported To Venue:</b> Yes
         </p>
       )}
 
       {user.paymentVerified && (
-        <p className="text-xs mt-2 text-zinc-400">
+        <p className={`text-xs mt-2 ${(yellowCard || greenCard) ? 'text-zinc-800' : 'text-zinc-400' }`}>
           <b>Payment Verified:</b> Yes
         </p>
       )}
-
-      {/* <Dialog>
-        <DialogTrigger asChild>
-          <button className="mt-4 w-full bg-zinc-800 hover:bg-zinc-700 text-sm py-2 rounded-md">
-            Assign Room / Group
-          </button>
-        </DialogTrigger>
-
-        <DialogContent className="bg-zinc-900 border border-zinc-800 text-zinc-100 outline-none focus:outline-none focus:ring-0 focus-visible:ring-0 ring-0 shadow-none">
-          <DialogHeader>
-            <DialogTitle>Assign for {user.name}</DialogTitle>
-          </DialogHeader>
-
-          <select
-            value={user.roomId || ""}
-            onChange={(e) => assignRoom(user._id, e.target.value)}
-            className="mt-4 w-full bg-zinc-950 border border-zinc-800 text-zinc-200 rounded-md px-3 py-2 text-sm focus:outline-none"
-          >
-            <option value="">Select Room</option>
-            {roomOptions}
-          </select>
-
-          <select
-            value={user.groupId || ""}
-            onChange={(e) => assignGroup(user._id, e.target.value)}
-            className="mt-2 w-full bg-zinc-950 border border-zinc-800 text-zinc-200 rounded-md px-3 py-2 text-sm focus:outline-none"
-          >
-            <option value="">Select Group</option>
-            {groupOptions}
-          </select>
-
-          <DialogClose asChild>
-            <button className="bg-zinc-800 px-4 py-2 rounded-md text-sm">
-              Close
-            </button>
-          </DialogClose>
-        </DialogContent>
-      </Dialog> */}
 
       <Dialog>
         <DialogTrigger asChild>
@@ -257,7 +228,7 @@ const UserCard = React.memo(function UserCard({
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800"
+              className={`h-8 w-8 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 ${(yellowCard || greenCard) ? 'text-zinc-900 hover:text-zinc-300 hover:bg-zinc-900' : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800' }`}
             >
               <Maximize2 size={16} />
             </Button>
