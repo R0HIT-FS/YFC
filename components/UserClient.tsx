@@ -962,14 +962,14 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
               Age
             </DropdownMenuLabel>
 
-            <DropdownMenuCheckboxItem
+            {/* <DropdownMenuCheckboxItem
               className="cursor-pointer hover:bg-zinc-800 data-[state=checked]:bg-zinc-800
     data-[state=checked]:text-white"
               checked={modes.includes("age")}
               onCheckedChange={() => toggleMode("age")}
             >
               Age (Ascending)
-            </DropdownMenuCheckboxItem>
+            </DropdownMenuCheckboxItem> */}
 
             <DropdownMenuCheckboxItem
               className="cursor-pointer hover:bg-zinc-800 data-[state=checked]:bg-zinc-800
