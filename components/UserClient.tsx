@@ -72,6 +72,13 @@ interface UserCardProps {
   togglePayment: (userId: string, verified: boolean) => void;
 }
 
+type RoomMeta = {
+  _id: string;
+  name: string;
+  limit: number;
+  currentCount: number;
+};
+
 interface UsersClientProps {
   users: User[];
 }
@@ -395,6 +402,7 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
   const [ageRange, setAgeRange] = useState<[number, number]>([0, 100]);
   const [modes, setModes] = useState<string[]>([]);
   const [refreshFlag, setRefreshFlag] = useState(0);
+  const [roomMeta, setRoomMeta] = useState<Record<string, RoomMeta>>({});
 
   const toggleMode = (mode: string) => {
     setModes((prev) =>
@@ -419,12 +427,25 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
       const roomsData = await roomsRes.json();
       const groupsData = await groupsRes.json();
 
+      // if (roomsData.success) {
+      //   const map: Record<string, string> = {};
+      //   roomsData.rooms.forEach(
+      //     (r: { _id: string; name: string }) => (map[r._id] = r.name),
+      //   );
+      //   setRooms(map);
+      // }
+
       if (roomsData.success) {
-        const map: Record<string, string> = {};
-        roomsData.rooms.forEach(
-          (r: { _id: string; name: string }) => (map[r._id] = r.name),
-        );
-        setRooms(map);
+        const roomNameMap: Record<string, string> = {};
+        const roomMetaMap: Record<string, RoomMeta> = {};
+
+        roomsData.rooms.forEach((r: RoomMeta) => {
+          roomNameMap[r._id] = r.name;
+          roomMetaMap[r._id] = r;
+        });
+
+        setRooms(roomNameMap);
+        setRoomMeta(roomMetaMap);
       }
 
       if (groupsData.success) {
@@ -438,6 +459,14 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
 
     fetchData();
   }, []);
+
+  const isRoomFull = (roomId: string) => {
+    const room = roomMeta[roomId];
+
+    if (!room) return false;
+
+    return (roomCounts[roomId] || 0) >= room.limit;
+  };
 
   useEffect(() => {
     let lastSyncRef = new Date().toISOString();
@@ -502,6 +531,17 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
     return map;
   }, [users]);
 
+  const roomCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+
+    users.forEach((u) => {
+      if (!u.roomId) return;
+
+      counts[u.roomId] = (counts[u.roomId] || 0) + 1;
+    });
+
+    return counts;
+  }, [users]);
   // const assignRoom = useCallback(
   //   async (userId: string, roomId: string) => {
   //     const user = userMap.get(userId);
@@ -553,11 +593,40 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
         }
 
         // 🔥 optimistic update ONLY if needed
-        setUsers((prev) =>
-          prev.map((u) =>
-            u._id === userId && u.roomId !== roomId ? { ...u, roomId } : u,
-          ),
-        );
+        // setUsers((prev) =>
+        //   prev.map((u) =>
+        //     u._id === userId && u.roomId !== roomId ? { ...u, roomId } : u,
+        //   ),
+        // );
+
+        setUsers((prev) => {
+          const previousRoomId = prev.find((u) => u._id === userId)?.roomId;
+
+          setRoomMeta((meta) => {
+            const updated = { ...meta };
+
+            if (previousRoomId && updated[previousRoomId]) {
+              updated[previousRoomId] = {
+                ...updated[previousRoomId],
+                currentCount: Math.max(
+                  0,
+                  updated[previousRoomId].currentCount - 1,
+                ),
+              };
+            }
+
+            if (roomId && updated[roomId]) {
+              updated[roomId] = {
+                ...updated[roomId],
+                currentCount: updated[roomId].currentCount + 1,
+              };
+            }
+
+            return updated;
+          });
+
+          return prev.map((u) => (u._id === userId ? { ...u, roomId } : u));
+        });
 
         toast.success("Room assigned");
         // router.refresh();
@@ -641,16 +710,37 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
     [userMap],
   );
 
+  // const roomOptions = useMemo(
+  //   () =>
+  //     Object.entries(rooms).map(([id, name]) => (
+  //       <option key={id} value={id}>
+  //         {name}
+  //       </option>
+  //     )),
+  //   [rooms],
+  // );
+
   const roomOptions = useMemo(
     () =>
-      Object.entries(rooms).map(([id, name]) => (
-        <option key={id} value={id}>
-          {name}
-        </option>
-      )),
-    [rooms],
-  );
+      Object.entries(rooms).map(([id, name]) => {
+        const full = isRoomFull(id);
 
+        return (
+          <option
+            key={id}
+            value={id}
+            disabled={full}
+            className="flex justify-between items-center"
+          >
+            {name}{" "}
+            {full
+              ? "(Full)"
+              : `(${roomCounts[id] || 0}/${roomMeta[id]?.limit || 0})`}
+          </option>
+        );
+      }),
+    [rooms, roomMeta],
+  );
   const groupOptions = useMemo(
     () =>
       Object.entries(groups).map(([id, name]) => (
