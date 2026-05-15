@@ -29,6 +29,7 @@ import { Button } from "@/components/ui/button";
 import {
   ExternalLink,
   Maximize2,
+  OctagonX,
   RotateCw,
   SlidersHorizontal,
   Verified,
@@ -93,13 +94,15 @@ const UserCard = React.memo(function UserCard({
   const yellowCard = user.paymentVerified === true;
   const greenCard = yellowCard && user.reportedToVenue === true;
   return (
-    <div className={`border border-zinc-800 rounded-xl p-5 relative bg-green-400 ${
-      greenCard
-        ? "bg-green-200"
-        : yellowCard
-        ? "bg-yellow-300"
-        : "bg-zinc-900"
-    }`}>
+    <div
+      className={`border border-zinc-800 rounded-xl p-5 relative bg-green-400 ${
+        greenCard
+          ? "bg-green-200"
+          : yellowCard
+            ? "bg-yellow-300"
+            : "bg-zinc-900"
+      }`}
+    >
       {/* Avatar */}
       <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center mb-3">
         {user.name?.charAt(0)?.toUpperCase() || "U"}
@@ -111,36 +114,53 @@ const UserCard = React.memo(function UserCard({
         </Badge>
       )}
 
-      <p className={`font-medium ${(yellowCard || greenCard) ? 'text-zinc-900' : 'text-white' }`}>
-        {user.name}, <span className={`${(yellowCard || greenCard) ? 'text-zinc-900' : 'text-zinc-400' }`}>{user.age || "N/A"} </span>
+      <p
+        className={`font-medium ${yellowCard || greenCard ? "text-zinc-900" : "text-white"}`}
+      >
+        {user.name},{" "}
+        <span
+          className={`${yellowCard || greenCard ? "text-zinc-900" : "text-zinc-400"}`}
+        >
+          {user.age || "N/A"}{" "}
+        </span>
       </p>
 
-      <p className={`text-sm mt-2 ${(yellowCard || greenCard) ? 'text-zinc-800' : 'text-zinc-400' }`}>
+      <p
+        className={`text-sm mt-2 ${yellowCard || greenCard ? "text-zinc-800" : "text-zinc-400"}`}
+      >
         {user.churchName && user.churchName.trim().toLowerCase() !== "other"
           ? user.churchName
           : user.other?.trim()}
       </p>
 
       {user.roomId && rooms[user.roomId] && (
-        <p className={`text-xs mt-3 ${(yellowCard || greenCard) ? 'text-zinc-800' : 'text-zinc-400' }`}>
+        <p
+          className={`text-xs mt-3 ${yellowCard || greenCard ? "text-zinc-800" : "text-zinc-400"}`}
+        >
           <b>Room:</b> {rooms[user.roomId]}
         </p>
       )}
 
       {user.groupId && groups[user.groupId] && (
-        <p className={`text-xs mt-2 ${(yellowCard || greenCard) ? 'text-zinc-800' : 'text-zinc-400' }`}>
+        <p
+          className={`text-xs mt-2 ${yellowCard || greenCard ? "text-zinc-800" : "text-zinc-400"}`}
+        >
           <b>Group:</b> {groups[user.groupId]}
         </p>
       )}
 
       {user.reportedToVenue && (
-        <p className={`text-xs mt-2 ${(yellowCard || greenCard) ? 'text-zinc-800' : 'text-zinc-400' }`}>
+        <p
+          className={`text-xs mt-2 ${yellowCard || greenCard ? "text-zinc-800" : "text-zinc-400"}`}
+        >
           <b>Reported To Venue:</b> Yes
         </p>
       )}
 
       {user.paymentVerified && (
-        <p className={`text-xs mt-2 ${(yellowCard || greenCard) ? 'text-zinc-800' : 'text-zinc-400' }`}>
+        <p
+          className={`text-xs mt-2 ${yellowCard || greenCard ? "text-zinc-800" : "text-zinc-400"}`}
+        >
           <b>Payment Verified:</b> Yes
         </p>
       )}
@@ -228,7 +248,7 @@ const UserCard = React.memo(function UserCard({
             <Button
               variant="ghost"
               size="icon"
-              className={`h-8 w-8 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 ${(yellowCard || greenCard) ? 'text-zinc-900 hover:text-zinc-300 hover:bg-zinc-900' : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800' }`}
+              className={`h-8 w-8 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 ${yellowCard || greenCard ? "text-zinc-900 hover:text-zinc-300 hover:bg-zinc-900" : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800"}`}
             >
               <Maximize2 size={16} />
             </Button>
@@ -713,6 +733,10 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
 
   const nameCounts: Record<string, number> = {};
 
+  const handleClearFilters = () => {
+    setModes([]);
+  };
+
   for (const u of users) {
     const key = u.name?.toLowerCase();
     if (!key) continue;
@@ -1030,6 +1054,17 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
     [&_[role=slider]]:shadow-sm
   "
             />
+          </div>
+        )}
+
+        {modes.length > 0 && (
+          <div>
+            <button
+              onClick={handleClearFilters}
+              className="block w-full flex gap-2 items-center justify-center text-[16px] bg-zinc-900 border border-zinc-800 px-3 py-2 rounded-md text-sm hover:bg-zinc-800 cursor-pointer"
+            >
+              Clear All Filters <OctagonX size={"18px"} />
+            </button>
           </div>
         )}
 
