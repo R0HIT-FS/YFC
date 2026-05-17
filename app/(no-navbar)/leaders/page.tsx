@@ -72,6 +72,7 @@ async function getData() {
       groups: groups.map((g) => ({
         _id: g._id?.toString() ?? "",
         name: g.name ?? "Unnamed Group",
+        phone: g.phone ?? null,
       })) as Group[],
 
       usersByGroup,

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Maximize2 } from "lucide-react";
+import { CircleGauge, CircleUser, Maximize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ChevronsUpDown } from "lucide-react";
 import {
@@ -39,7 +39,28 @@ interface User {
 interface Group {
   _id: string;
   name?: string | null;
+  phone?: string | number | null | undefined;
+
+  
 }
+
+const getAgeRange = (users: User[]) => {
+  const validAges = users
+    .map((u) => Number(u.age))
+    .filter((age) => !isNaN(age));
+
+  if (validAges.length === 0) {
+    return {
+      minAge: null,
+      maxAge: null,
+    };
+  }
+
+  return {
+    minAge: Math.min(...validAges),
+    maxAge: Math.max(...validAges),
+  };
+};
 
 export default function LeaderCard({
   group,
@@ -54,6 +75,8 @@ export default function LeaderCard({
 }) {
   const [isOpen, setIsOpen] = React.useState(false);
 
+  const { minAge, maxAge } = getAgeRange(users);
+
   return (
     <div className="w-full bg-zinc-900 border border-zinc-800 rounded-xl py-3 px-5">
       {/* Group Title */}
@@ -67,19 +90,26 @@ export default function LeaderCard({
         className="flex w-full flex-col gap-2"
       >
         {/* <div className="flex items-center justify-between gap-4 w-full"> */}
-          <CollapsibleTrigger asChild>
+        <CollapsibleTrigger asChild>
           <div className="flex items-center justify-between gap-4 w-full">
-            <h1 className="text-lg font-semibold">
+            <h1 className="text-lg font-semibold flex items-center gap-[3px] flex-wrap">
               {group.name || "Unnamed Group"}
+              {/* {group?.phone && (
+                <a href={`tel:${group?.phone}`}>{group?.phone}</a>
+              )} */}
+              {users.length > 0 && <p className="text-sm text-semibold whitespace-nowrap">({users.length})</p>}{" "}
+              {(minAge && maxAge) &&<span className="text-sm text-semibold whitespace-nowrap">[{minAge} - {maxAge}]</span>}
             </h1>
             <Button variant="ghost" size="icon" className="size-8">
               <ChevronsUpDown />
               <span className="sr-only">Toggle details</span>
-            </Button></div>
-          </CollapsibleTrigger>
+            </Button>
+          </div>
+        </CollapsibleTrigger>
         {/* </div> */}
         <CollapsibleContent className="flex flex-col gap-2">
           <div className="grid gap-3">
+            {group?.phone && <a className="text-sm text-semibold" href={`tel:${group?.phone}`}>Leader's Phone : {group?.phone}</a>}
             {users.length > 0 ? (
               users.map((user) => (
                 <div
