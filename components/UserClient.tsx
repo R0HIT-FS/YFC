@@ -821,17 +821,31 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
     [],
   );
 
-  const nameCounts: Record<string, number> = {};
+  // const nameCounts: Record<string, number> = {};
+
+  const duplicateCounts: Record<string, number> = {};
 
   const handleClearFilters = () => {
     setModes([]);
   };
 
-  for (const u of users) {
-    const key = u.name?.toLowerCase();
-    if (!key) continue;
+  // for (const u of users) {
+  //   const key = u.name?.toLowerCase();
+  //   if (!key) continue;
 
-    nameCounts[key] = (nameCounts[key] || 0) + 1;
+  //   nameCounts[key] = (nameCounts[key] || 0) + 1;
+  // }
+
+  for (const u of users) {
+    const name = u.name?.trim().toLowerCase() || "";
+    const church =
+      (u.churchName?.trim().toLowerCase() === "other" ? u.other : u.churchName)
+        ?.trim()
+        .toLowerCase() || "";
+
+    const key = `${name}__${church}`;
+
+    duplicateCounts[key] = (duplicateCounts[key] || 0) + 1;
   }
 
   const processedUsers = useMemo(() => {
@@ -888,9 +902,24 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
                 return u.paymentVerified === true;
               case "payment-unverified":
                 return !u.paymentVerified;
-              case "duplicate":
-                const key = u.name?.toLowerCase();
-                return key ? nameCounts[key] > 1 : false;
+              // case "duplicate":
+              //   const key = u.name?.toLowerCase();
+              //   return key ? nameCounts[key] > 1 : false;
+              case "duplicate": {
+                const name = u.name?.trim().toLowerCase() || "";
+
+                const church =
+                  (u.churchName?.trim().toLowerCase() === "other"
+                    ? u.other
+                    : u.churchName
+                  )
+                    ?.trim()
+                    .toLowerCase() || "";
+
+                const key = `${name}__${church}`;
+
+                return duplicateCounts[key] > 1;
+              }
               default:
                 return true;
             }
@@ -916,13 +945,33 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
       );
     }
 
+    // return result.map((u) => {
+    //   const key = u.name?.toLowerCase();
+    //   const count = key ? nameCounts[key] || 0 : 0;
+
+    //   return {
+    //     ...u,
+    //     duplicateCount: count > 0 ? count - 1 : 0,
+    //   };
+    // });
     return result.map((u) => {
-      const key = u.name?.toLowerCase();
-      const count = key ? nameCounts[key] || 0 : 0;
+      const name = u.name?.trim().toLowerCase() || "";
+
+      const church =
+        (u.churchName?.trim().toLowerCase() === "other"
+          ? u.other
+          : u.churchName
+        )
+          ?.trim()
+          .toLowerCase() || "";
+
+      const key = `${name}__${church}`;
+
+      const count = duplicateCounts[key] || 0;
 
       return {
         ...u,
-        duplicateCount: count > 0 ? count - 1 : 0,
+        duplicateCount: count > 1 ? count - 1 : 0,
       };
     });
   }, [users, debouncedSearch, modes, ageRange]);
