@@ -852,18 +852,34 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
     const q = debouncedSearch.trim().toLowerCase();
 
     let result = users;
-
+    
+    
     // 🔍 search
+    // if (q) {
+    //   result = result.filter(
+    //     (u) =>
+    //       const sosId = `SOS - ${u.uniqueId}`.toLowerCase();
+    //       u.name?.toLowerCase().includes(q) ||
+    //       u.churchName?.toLowerCase().includes(q) ||
+    //       u.other?.toLowerCase().includes(q) ||
+    //       sosId.includes(q) ||
+    //       u.age?.toString().includes(q),
+    //   );
+    // }
+
     if (q) {
-      result = result.filter(
-        (u) =>
-          u.name?.toLowerCase().includes(q) ||
-          u.churchName?.toLowerCase().includes(q) ||
-          u.other?.toLowerCase().includes(q) ||
-          u.uniqueId?.toLowerCase().includes(q) ||
-          u.age?.toString().includes(q),
-      );
-    }
+  result = result.filter((u) => {
+    const sosId = `SOS - ${u.uniqueId}`.toLowerCase();
+
+    return (
+      u.name?.toLowerCase().includes(q) ||
+      u.churchName?.toLowerCase().includes(q) ||
+      u.other?.toLowerCase().includes(q) ||
+      sosId.includes(q) ||
+      u.age?.toString().includes(q)
+    );
+  });
+}
 
     if (modes.length > 0) {
       const genderModes = modes.filter((m) => m === "male" || m === "female");
