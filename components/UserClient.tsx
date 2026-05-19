@@ -132,6 +132,10 @@ const UserCard = React.memo(function UserCard({
         </span>
       </p>
 
+      {user?.uniqueId && <p className={`text-sm mt-3 ${yellowCard || greenCard ? "text-zinc-800" : "text-zinc-400"}`}>
+        <b>Unique ID :</b> <strong>SOS - {user?.uniqueId}</strong>
+        </p>}
+
       <p
         className={`text-sm mt-2 ${yellowCard || greenCard ? "text-zinc-800" : "text-zinc-400"}`}
       >
@@ -875,8 +879,7 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
       u.name?.toLowerCase().includes(q) ||
       u.churchName?.toLowerCase().includes(q) ||
       u.other?.toLowerCase().includes(q) ||
-      sosId.includes(q) ||
-      u.age?.toString().includes(q)
+      sosId.includes(q)
     );
   });
 }
