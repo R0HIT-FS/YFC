@@ -5,6 +5,7 @@ import CreateGroup from "@/components/CreateGroup";
 import RefreshHandler from "@/components/RefreshHandler";
 import LeaderCard from "@/components/LeaderCard";
 import LeaderSearch from "@/components/LeaderSearch";
+import ExportLeadersPDFButton from "@/components/ExportLeadersPDFButton";
 
 interface User {
   _id: string;
@@ -12,17 +13,17 @@ interface User {
   email?: string | null;
   age?: number | null;
   gender?: string | null;
-  phone? : string | number | null | undefined;
+  phone?: string | number | null | undefined;
   churchName?: string | null;
   groupId?: string | null;
   roomId?: string | null;
+  remark?: string | null;
 }
 
 interface Group {
   _id: string;
   name?: string | null;
 }
-
 
 async function getData() {
   try {
@@ -59,12 +60,13 @@ async function getData() {
       usersByGroup[groupId].push({
         _id: u._id?.toString() ?? "",
         name: u.name ?? "Unknown User",
-        // email: u.email ?? "",
+        email: u.email ?? "",
         age: u.age ?? null,
         gender: u.gender ?? "",
         phone: u.phone ?? "",
         groupId,
         roomId: u.roomId ? u.roomId.toString() : null,
+        remark: u.remark ?? "",
       });
     });
 
@@ -76,8 +78,8 @@ async function getData() {
       })) as Group[],
 
       usersByGroup,
-      roomMap, 
-      groupMap, 
+      roomMap,
+      groupMap,
     };
   } catch (error) {
     console.error("Database fetch failed:", error);
@@ -94,15 +96,16 @@ export default async function Leaders() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 p-10">
-
       <h2 className="text-3xl font-semibold mb-8">Group Leaders</h2>
 
+      <div className="mb-4"><ExportLeadersPDFButton groups={groups} usersByGroup={usersByGroup} /></div>
+
       <LeaderSearch
-  groups={groups}
-  usersByGroup={usersByGroup}
-  roomMap={roomMap}
-  groupMap={groupMap}
-/>
+        groups={groups}
+        usersByGroup={usersByGroup}
+        roomMap={roomMap}
+        groupMap={groupMap}
+      />
 
       {/* <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {groups.length > 0 ? (

@@ -8,6 +8,7 @@ interface User {
   name?: string | null;
   groupId?: string | null;
   roomId?: string | null;
+  remark?: string | null;
 }
 
 interface Group {

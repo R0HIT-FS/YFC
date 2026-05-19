@@ -22,6 +22,8 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
+import { MessageSquarePlus } from "lucide-react";
+
 interface User {
   _id: string;
   name?: string | null;
@@ -34,14 +36,13 @@ interface User {
   roomId?: string | null;
   roomMap?: any;
   groupMap?: any;
+  remark?: string | null;
 }
 
 interface Group {
   _id: string;
   name?: string | null;
   phone?: string | number | null | undefined;
-
-  
 }
 
 const getAgeRange = (users: User[]) => {
@@ -74,6 +75,11 @@ export default function LeaderCard({
   groupMap: Record<string, string>;
 }) {
   const [isOpen, setIsOpen] = React.useState(false);
+  const [savingUserId, setSavingUserId] = React.useState<string | null>(null);
+
+  const [remarks, setRemarks] = React.useState<Record<string, string>>(
+    Object.fromEntries(users.map((u) => [u._id, u.remark || ""])),
+  );
 
   const { minAge, maxAge } = getAgeRange(users);
 
@@ -97,8 +103,16 @@ export default function LeaderCard({
               {/* {group?.phone && (
                 <a href={`tel:${group?.phone}`}>{group?.phone}</a>
               )} */}
-              {users.length > 0 && <p className="text-sm text-semibold whitespace-nowrap">({users.length})</p>}{" "}
-              {(minAge && maxAge) &&<span className="text-sm text-semibold whitespace-nowrap">[{minAge} - {maxAge}]</span>}
+              {users.length > 0 && (
+                <p className="text-sm text-semibold whitespace-nowrap">
+                  ({users.length})
+                </p>
+              )}{" "}
+              {minAge && maxAge && (
+                <span className="text-sm text-semibold whitespace-nowrap">
+                  [{minAge} - {maxAge}]
+                </span>
+              )}
             </h1>
             <Button variant="ghost" size="icon" className="size-8">
               <ChevronsUpDown />
@@ -109,7 +123,11 @@ export default function LeaderCard({
         {/* </div> */}
         <CollapsibleContent className="flex flex-col gap-2">
           <div className="grid gap-3">
-            {group?.phone && <a className="text-sm text-semibold" href={`tel:${group?.phone}`}>Leader's Phone : {group?.phone}</a>}
+            {group?.phone && (
+              <a className="text-sm text-semibold" href={`tel:${group?.phone}`}>
+                Leader's Phone : {group?.phone}
+              </a>
+            )}
             {users.length > 0 ? (
               users.map((user) => (
                 <div
@@ -152,6 +170,7 @@ export default function LeaderCard({
                               { label: "Age", value: user.age },
                               { label: "Gender", value: user.gender },
                               { label: "Phone", value: user.phone },
+                              { label: "Remark", value: user.remark },
                             ].map(({ label, value }) => {
                               const isPhone = label === "Phone";
                               return (
@@ -219,6 +238,79 @@ export default function LeaderCard({
                           <DialogClose asChild>
                             <Button variant="outline">Close</Button>
                           </DialogClose>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+
+                  <div className="absolute top-2 right-10">
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800"
+                        >
+                          <MessageSquarePlus size={14} />
+                        </Button>
+                      </DialogTrigger>
+
+                      <DialogContent className="bg-zinc-900 border border-zinc-800 text-zinc-100 focus:ring-0 focus-visible:ring-0 ring-0 shadow-none">
+                        <DialogHeader>
+                          <DialogTitle>
+                            Add a remark for this delegate
+                          </DialogTitle>
+                          {/* <DialogDescription>
+                            Add a note for this delegate
+                          </DialogDescription> */}
+                        </DialogHeader>
+
+                        <textarea
+                          value={remarks[user._id] || ""}
+                          onChange={(e) =>
+                            setRemarks((prev) => ({
+                              ...prev,
+                              [user._id]: e.target.value,
+                            }))
+                          }
+                          placeholder="Type remark..."
+                          className="min-h-[120px] rounded-md bg-zinc-950 border border-zinc-800 p-3 outline-none"
+                        />
+
+                        <DialogFooter>
+                          <Button
+                            disabled={savingUserId === user._id}
+                            onClick={async () => {
+                              try {
+                                setSavingUserId(user._id);
+
+                                const res = await fetch("/api/users/remark", {
+                                  method: "PATCH",
+                                  headers: {
+                                    "Content-Type": "application/json",
+                                  },
+                                  body: JSON.stringify({
+                                    userId: user._id,
+                                    remark: remarks[user._id],
+                                  }),
+                                });
+
+                                if (!res.ok) {
+                                  throw new Error();
+                                }
+
+                                user.remark = remarks[user._id];
+
+                                toast.success("Remark saved");
+                              } catch {
+                                toast.error("Failed to save remark");
+                              } finally {
+                                setSavingUserId(null);
+                              }
+                            }}
+                          >
+                            {savingUserId === user._id ? "Saving..." : "Save"}
+                          </Button>
                         </DialogFooter>
                       </DialogContent>
                     </Dialog>
