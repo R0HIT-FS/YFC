@@ -45,12 +45,12 @@ export default function ExportLeadersPDFButton({
       let y = 20;
 
       // HEADER
-      doc.setFillColor(24, 24, 27);
+      doc.setFillColor(211, 211, 211);
       doc.rect(0, 0, pageWidth, 28, "F");
 
       doc.setFont("helvetica", "bold");
       doc.setFontSize(18);
-      doc.setTextColor(255, 255, 255);
+      doc.setTextColor(0, 0, 0);
 
       doc.text(group.name || "Unnamed Leader", 15, 18);
 
