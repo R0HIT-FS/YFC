@@ -258,7 +258,7 @@ export default function LeaderCard({
                       <DialogContent className="bg-zinc-900 border border-zinc-800 text-zinc-100 focus:ring-0 focus-visible:ring-0 ring-0 shadow-none">
                         <DialogHeader>
                           <DialogTitle>
-                            Add a remark for this {user?.name}
+                            Add a remark for {user?.name}
                           </DialogTitle>
                           {/* <DialogDescription>
                             Add a note for this delegate
