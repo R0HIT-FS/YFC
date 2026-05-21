@@ -132,9 +132,13 @@ const UserCard = React.memo(function UserCard({
         </span>
       </p>
 
-      {user?.uniqueId && <p className={`text-sm mt-3 ${yellowCard || greenCard ? "text-zinc-800" : "text-zinc-400"}`}>
-        <b>Unique ID :</b> <strong>SOS - {user?.uniqueId}</strong>
-        </p>}
+      {user?.uniqueId && (
+        <p
+          className={`text-sm mt-3 ${yellowCard || greenCard ? "text-zinc-800" : "text-zinc-400"}`}
+        >
+          <b>Unique ID :</b> <strong>SOS - {user?.uniqueId}</strong>
+        </p>
+      )}
 
       <p
         className={`text-sm mt-2 ${yellowCard || greenCard ? "text-zinc-800" : "text-zinc-400"}`}
@@ -856,8 +860,7 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
     const q = debouncedSearch.trim().toLowerCase();
 
     let result = users;
-    
-    
+
     // 🔍 search
     // if (q) {
     //   result = result.filter(
@@ -872,17 +875,17 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
     // }
 
     if (q) {
-  result = result.filter((u) => {
-    const sosId = `SOS - ${u.uniqueId}`.toLowerCase();
+      result = result.filter((u) => {
+        const sosId = `SOS - ${u.uniqueId}`.toLowerCase();
 
-    return (
-      u.name?.toLowerCase().includes(q) ||
-      u.churchName?.toLowerCase().includes(q) ||
-      u.other?.toLowerCase().includes(q) ||
-      sosId.includes(q)
-    );
-  });
-}
+        return (
+          u.name?.toLowerCase().includes(q) ||
+          u.churchName?.toLowerCase().includes(q) ||
+          u.other?.toLowerCase().includes(q) ||
+          sosId.includes(q)
+        );
+      });
+    }
 
     if (modes.length > 0) {
       const genderModes = modes.filter((m) => m === "male" || m === "female");
@@ -952,6 +955,8 @@ export default function UsersClient({ users: initialUsers }: UsersClientProps) {
         return genderMatch && otherMatch && ageMatch;
       });
     }
+
+    result.sort((a, b) => Number(a.uniqueId || 0) - Number(b.uniqueId || 0));
 
     if (modes.includes("age-range")) {
       result = [...result].sort((a, b) => (a.age || 0) - (b.age || 0));
