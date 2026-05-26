@@ -46,21 +46,28 @@ interface RoomCardProps {
 
 function RoomCard({ room, users: initialUsers }: RoomCardProps) {
   const [localUsers, setLocalUsers] = useState<User[]>(initialUsers);
-  const [editOpen, setEditOpen] = useState(false);
   const [editName, setEditName] = useState(room.name || "");
   const [editLimit, setEditLimit] = useState(room.limit || 0);
   const [saving, setSaving] = useState(false);
-
+  
   const router = useRouter();
+  const [editOpen, setEditOpen] = useState(false);
+
+  useEffect(() => {
+  (window as any).__ROOM_DIALOG_OPEN__ = editOpen;
+
+  return () => {
+    (window as any).__ROOM_DIALOG_OPEN__ = false;
+  };
+}, [editOpen]);
 
   // 🔥 Sync ONLY when needed
-  useEffect(() => {
-    if (initialUsers !== localUsers) {
-      setLocalUsers(initialUsers);
-    }
-  }, [initialUsers]);
+  // useEffect(() => {
+  //   if (initialUsers !== localUsers) {
+  //     setLocalUsers(initialUsers);
+  //   }
+  // }, [initialUsers]);
 
-  // 🔥 No filtering needed anymore
   const roomUsers = localUsers;
 
   // 🔥 Optimized remove
@@ -159,8 +166,8 @@ function RoomCard({ room, users: initialUsers }: RoomCardProps) {
       setEditOpen(false);
 
       // 🔥 instant UI update without waiting
-      room.name = editName;
-      room.limit = editLimit;
+      // room.name = editName;
+      // room.limit = editLimit;
 
       router.refresh(); // keep SSR consistent
     } catch (err: any) {
@@ -269,7 +276,7 @@ function RoomCard({ room, users: initialUsers }: RoomCardProps) {
         ) : (
           <RoomHover />
         )}
-        <Dialog>
+        <Dialog open={editOpen} onOpenChange={setEditOpen}>
   <DialogTrigger asChild>
     <button className="block text-xs text-yellow-400 hover:text-yellow-300 cursor-pointer mt-2">
       Edit Room

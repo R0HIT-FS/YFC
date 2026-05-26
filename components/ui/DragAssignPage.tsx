@@ -350,7 +350,7 @@ export default function DragAssignPage() {
                   {/* <option value="verified">Verified</option> */}
                   {/* <option value="unverified">Unverified</option> */}
                   <option value="reported">Reported</option>
-                  <option value="unreported">Unreported</option>
+                  <option value="unreported">Not Reported</option>
                 </select>
 
                 <ChevronDown

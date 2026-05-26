@@ -104,7 +104,6 @@ async function getData() {
     db.collection("users").find({}).toArray(),
   ]);
 
-  // 🔥 GROUP USERS BY ROOM (BIGGEST PERFORMANCE WIN)
   const usersByRoom: Record<string, User[]> = {};
 
   users.forEach((u) => {
