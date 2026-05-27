@@ -56,6 +56,25 @@ export default function DragAssignPage() {
     "all" | "verified" | "unverified" | "reported" | "unreported"
   >("all");
 
+  const matchesDelegateFilter = (u: User) => {
+  switch (delegateFilter) {
+    case "verified":
+      return u.paymentVerified === true;
+
+    case "unverified":
+      return u.paymentVerified !== true;
+
+    case "reported":
+      return u.reportedToVenue === true;
+
+    case "unreported":
+      return u.reportedToVenue !== true;
+
+    default:
+      return true;
+  }
+};
+
   const inGroupAgeRange = (age: number) =>
     age >= groupAgeRange[0] && age <= groupAgeRange[1];
 
@@ -185,40 +204,59 @@ export default function DragAssignPage() {
   //   )
   //   .sort((a, b) => (a.age || 0) - (b.age || 0));
 
+  // const unassignedUsers = users
+  //   .filter(
+  //     (u) =>
+  //       !assignments[u._id] && u.age >= ageRange[0] && u.age <= ageRange[1],
+  //   )
+  //   .filter((u) => {
+  //     switch (delegateFilter) {
+  //       case "verified":
+  //         return u.paymentVerified;
+
+  //       case "unverified":
+  //         return !u.paymentVerified;
+
+  //       case "reported":
+  //         return u.reportedToVenue;
+
+  //       case "unreported":
+  //         return !u.reportedToVenue;
+
+  //       default:
+  //         return true;
+  //     }
+  //   })
+  //   .sort((a, b) => (a.age || 0) - (b.age || 0));
+
   const unassignedUsers = users
-    .filter(
-      (u) =>
-        !assignments[u._id] && u.age >= ageRange[0] && u.age <= ageRange[1],
-    )
-    .filter((u) => {
-      switch (delegateFilter) {
-        case "verified":
-          return u.paymentVerified;
+  .filter(
+    (u) =>
+      !assignments[u._id] &&
+      u.age >= ageRange[0] &&
+      u.age <= ageRange[1],
+  )
+  .filter(matchesDelegateFilter)
+  .sort((a, b) => (a.age || 0) - (b.age || 0));
 
-        case "unverified":
-          return !u.paymentVerified;
+  // const isGroupActive = (group: Group) => {
+  //   const groupUsers = users.filter((u) => assignments[u._id] === group._id);
 
-        case "reported":
-          return u.reportedToVenue;
+  //   if (groupAgeRange[0] === 0 && groupAgeRange[1] === 100) return true;
 
-        case "unreported":
-          return !u.reportedToVenue;
+  //   return groupUsers.some(
+  //     (u) => u.age >= groupAgeRange[0] && u.age <= groupAgeRange[1],
+  //   );
+  // };
 
-        default:
-          return true;
-      }
-    })
-    .sort((a, b) => (a.age || 0) - (b.age || 0));
 
   const isGroupActive = (group: Group) => {
-    const groupUsers = users.filter((u) => assignments[u._id] === group._id);
-
-    if (groupAgeRange[0] === 0 && groupAgeRange[1] === 100) return true;
-
-    return groupUsers.some(
-      (u) => u.age >= groupAgeRange[0] && u.age <= groupAgeRange[1],
-    );
-  };
+  const groupUsers = users.filter(
+    (u) =>
+      assignments[u._id] === group._id &&
+      matchesDelegateFilter(u),
+  );
+}
 
   // const visibleGroups = groups.filter((g) =>
   //   g.name?.toLowerCase().includes(groupSearch.toLowerCase()),
@@ -257,14 +295,24 @@ export default function DragAssignPage() {
     });
 
     // Only assign currently unassigned users in selected age range
+    // const eligibleUsers = users
+    //   .filter(
+    //     (u) =>
+    //       !nextAssignments[u._id] &&
+    //       u.age >= ageRange[0] &&
+    //       u.age <= ageRange[1],
+    //   )
+    //   .sort((a, b) => a.age - b.age);
+
     const eligibleUsers = users
-      .filter(
-        (u) =>
-          !nextAssignments[u._id] &&
-          u.age >= ageRange[0] &&
-          u.age <= ageRange[1],
-      )
-      .sort((a, b) => a.age - b.age);
+  .filter(
+    (u) =>
+      !nextAssignments[u._id] &&
+      u.age >= ageRange[0] &&
+      u.age <= ageRange[1] &&
+      matchesDelegateFilter(u),
+  )
+  .sort((a, b) => a.age - b.age);
 
     for (const user of eligibleUsers) {
       // Prefer groups without the same church, sorted by smallest size
@@ -542,18 +590,31 @@ export default function DragAssignPage() {
 
             <div className="grid gap-4">
               {visibleGroups.map((g) => (
+                // <GroupCard
+                //   key={g._id}
+                //   group={g}
+                //   users={users}
+                //   assignments={assignments}
+                //   removeUser={removeUser}
+                //   ageRange={ageRange}
+                //   isSelected={selectedGroupIds.has(g._id)}
+                //   onToggleSelect={toggleGroupSelection}
+                //   inGroupAgeRange={inGroupAgeRange}
+                //   groupAgeRange={groupAgeRange}
+                // />
                 <GroupCard
-                  key={g._id}
-                  group={g}
-                  users={users}
-                  assignments={assignments}
-                  removeUser={removeUser}
-                  ageRange={ageRange}
-                  isSelected={selectedGroupIds.has(g._id)}
-                  onToggleSelect={toggleGroupSelection}
-                  inGroupAgeRange={inGroupAgeRange}
-                  groupAgeRange={groupAgeRange}
-                />
+  key={g._id}
+  group={g}
+  users={users}
+  assignments={assignments}
+  removeUser={removeUser}
+  ageRange={ageRange}
+  isSelected={selectedGroupIds.has(g._id)}
+  onToggleSelect={toggleGroupSelection}
+  inGroupAgeRange={inGroupAgeRange}
+  groupAgeRange={groupAgeRange}
+  matchesDelegateFilter={matchesDelegateFilter}
+/>
               ))}
             </div>
           </div>
@@ -625,6 +686,7 @@ function GroupCard({
   onToggleSelect,
   inGroupAgeRange,
   groupAgeRange,
+  matchesDelegateFilter,
 }: {
   group: Group;
   users: User[];
@@ -635,22 +697,43 @@ function GroupCard({
   onToggleSelect: (groupId: string) => void;
   inGroupAgeRange: any;
   groupAgeRange: [number, number];
+  matchesDelegateFilter: (u: User) => boolean;
 }) {
   const isFullRange = groupAgeRange[0] === 0 && groupAgeRange[1] === 100;
 
+  // const groupHasAgeMatch = isFullRange
+  //   ? true
+  //   : users
+  //       .filter((u) => String(assignments[u._id]) === String(group._id))
+  //       .some((u) => u.age >= groupAgeRange[0] && u.age <= groupAgeRange[1]);
+
   const groupHasAgeMatch = isFullRange
-    ? true
-    : users
-        .filter((u) => String(assignments[u._id]) === String(group._id))
-        .some((u) => u.age >= groupAgeRange[0] && u.age <= groupAgeRange[1]);
+  ? true
+  : users
+      .filter(
+        (u) =>
+          String(assignments[u._id]) === String(group._id) &&
+          matchesDelegateFilter(u),
+      )
+      .some(
+        (u) =>
+          u.age >= groupAgeRange[0] &&
+          u.age <= groupAgeRange[1],
+      );
 
   const { setNodeRef, isOver } = useDroppable({
     id: String(group._id),
   });
 
+  // const assignedUsers = users.filter(
+  //   (u) => String(assignments[u._id]) === String(group._id),
+  // );
+
   const assignedUsers = users.filter(
-    (u) => String(assignments[u._id]) === String(group._id),
-  );
+  (u) =>
+    String(assignments[u._id]) === String(group._id) &&
+    matchesDelegateFilter(u),
+);
 
   return (
     <div
