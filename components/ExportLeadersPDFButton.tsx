@@ -87,7 +87,7 @@ export default function ExportLeadersPDFButton({
       // USERS
       users.forEach((user, index) => {
         const remarkLines = doc.splitTextToSize(
-          user.remark || "-",
+          user.remark || "",
           55
         );
 

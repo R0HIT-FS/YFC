@@ -98,7 +98,7 @@ export default async function Leaders() {
     <div className="min-h-screen bg-zinc-950 text-zinc-100 p-10">
       <h2 className="text-3xl font-semibold mb-8">Group Leaders</h2>
 
-      {/* <div className="mb-4"><ExportLeadersPDFButton groups={groups} usersByGroup={usersByGroup} /></div> */}
+      <div className="mb-4"><ExportLeadersPDFButton groups={groups} usersByGroup={usersByGroup} /></div>
 
       <LeaderSearch
         groups={groups}
