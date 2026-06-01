@@ -9,14 +9,41 @@ export async function GET() {
       .collection("users")
       .aggregate([
         // 🔗 Rooms
+        // {
+        //   $lookup: {
+        //     from: "rooms",
+        //     localField: "roomId",
+        //     foreignField: "_id",
+        //     as: "room",
+        //   },
+        // },
+
         {
-          $lookup: {
-            from: "rooms",
-            localField: "roomId",
-            foreignField: "_id",
-            as: "room",
+  $lookup: {
+    from: "groups",
+    let: {
+      groupId: {
+        $toObjectId: "$groupId",
+      },
+    },
+    pipeline: [
+      {
+        $match: {
+          $expr: {
+            $eq: ["$_id", "$$groupId"],
           },
         },
+      },
+    ],
+    as: "group",
+  },
+},
+{
+  $unwind: {
+    path: "$group",
+    preserveNullAndEmptyArrays: true,
+  },
+},
         {
           $unwind: {
             path: "$room",
