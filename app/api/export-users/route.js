@@ -9,21 +9,49 @@ export async function GET() {
       .collection("users")
       .aggregate([
         // 🔗 Rooms
+        {
+          $lookup: {
+            from: "rooms",
+            localField: "roomId",
+            foreignField: "_id",
+            as: "room",
+          },
+        },
+        {
+          $unwind: {
+            path: "$room",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+
+        // 🔗 Groups
         // {
         //   $lookup: {
-        //     from: "rooms",
-        //     localField: "roomId",
+        //     from: "groups",
+        //     localField: "groupId",
         //     foreignField: "_id",
-        //     as: "room",
+        //     as: "group",
         //   },
         // },
+        // {
+        //   $unwind: {
+        //     path: "$group",
+        //     preserveNullAndEmptyArrays: true,
+        //   },
+        // },
+
 
         {
   $lookup: {
     from: "groups",
     let: {
       groupId: {
-        $toObjectId: "$groupId",
+        $convert: {
+          input: "$groupId",
+          to: "objectId",
+          onError: null,
+          onNull: null,
+        },
       },
     },
     pipeline: [
@@ -37,35 +65,7 @@ export async function GET() {
     ],
     as: "group",
   },
-},
-{
-  $unwind: {
-    path: "$group",
-    preserveNullAndEmptyArrays: true,
-  },
-},
-        {
-          $unwind: {
-            path: "$room",
-            preserveNullAndEmptyArrays: true,
-          },
-        },
-
-        // 🔗 Groups
-        {
-          $lookup: {
-            from: "groups",
-            localField: "groupId",
-            foreignField: "_id",
-            as: "group",
-          },
-        },
-        {
-          $unwind: {
-            path: "$group",
-            preserveNullAndEmptyArrays: true,
-          },
-        },
+}
 
         // 📦 Final shape
         {
