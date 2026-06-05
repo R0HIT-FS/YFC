@@ -123,7 +123,7 @@ export default async function Leaders() {
         )}
       </div> */}
 
-      <RefreshHandler />
+      {/* <RefreshHandler /> */}
     </div>
   );
 }
